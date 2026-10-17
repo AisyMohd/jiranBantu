@@ -1,5 +1,6 @@
-
-import './style.css'
+import './style.css';
+import { initAuth } from './js/auth.js';
+import { initDashboard } from './js/dashboard.js';
 
 document.querySelector('#app').innerHTML = `
   <header class="navbar">
@@ -164,12 +165,24 @@ document.querySelector('#app').innerHTML = `
 
       <form id="auth-form">
         <label for="phone">Phone number</label>
-        <input id="phone" name="phone" type="tel" placeholder="e.g. 0123456789" autocomplete="tel" required />
+        <input type="tel" id="phone" placeholder="+60123456789" autocomplete="tel" required />
+        <div id="otp-section" hidden>
+          <label for="otp">Verification Code</label>
+          <input
+            type="text"
+            id="otp"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            placeholder="Enter 6-digit code"
+          />
 
-        <div id="password-field">
-          <label for="password">Password</label>
-          <input id="password" name="password" type="password" placeholder="Enter your password" autocomplete="current-password" minlength="8" required />
+          <button type="button" id="verify-otp-btn">
+            Verify Code
+          </button>
         </div>
+
+        <div id="recaptcha-container"></div>
+          
 
         <div id="register-fields" hidden>
           <label for="full-name">Full name</label>
@@ -185,80 +198,38 @@ document.querySelector('#app').innerHTML = `
       <p class="modal-switch" id="modal-switch">
         New to Community Aid? <button type="button" id="switch-auth">Register</button>
       </p>
-      <p class="prototype-note">Prototype preview — account access will be connected later.</p>
+      <p class="prototype-note">Verify your phone number securely to access JiranBantu.</p>
     </section>
   </div>
+
+
+  <section id="dashboard" hidden>
+    <header class="navbar">
+      <a class="brand" href="#" id="dashboard-brand">
+        <span>Jiran<span class="brand-accent">Bantu</span></span>
+      </a>
+      <div class="nav-actions">
+        <span id="dashboard-user"></span>
+        <button class="btn btn-outline" id="logout-btn">Logout</button>
+      </div>
+    </header>
+
+    <main class="dashboard-main">
+      <p class="section-label" id="dashboard-role">YOUR COMMUNITY</p>
+      <h1 id="dashboard-title">Dashboard</h1>
+      <p id="dashboard-description"></p>
+
+      <div id="dashboard-nav" class="dashboard-grid"></div>
+
+      <section class="dashboard-placeholder">
+        <h2 id="dashboard-panel-title">Welcome!</h2>
+        <p id="dashboard-panel-description">
+          Your dashboard is ready. Detailed pages will be added by the team.
+        </p>
+      </section>
+    </main>
+  </section>
+
 `
-
-const modal = document.querySelector('#auth-modal')
-const form = document.querySelector('#auth-form')
-const registerFields = document.querySelector('#register-fields')
-const passwordInput = document.querySelector('#password')
-const phoneInput = document.querySelector('#phone')
-const fullNameInput = document.querySelector('#full-name')
-const areaInput = document.querySelector('#area')
-const notice = document.querySelector('#form-notice')
-
-let authMode = 'login'
-
-function openAuth(mode) {
-  authMode = mode
-  modal.hidden = false
-  document.body.classList.add('modal-open')
-  notice.textContent = ''
-
-  const isRegister = mode === 'register'
-
-  document.querySelector('#modal-eyebrow').textContent =
-    isRegister ? 'BECOME PART OF YOUR COMMUNITY' : 'WELCOME TO YOUR COMMUNITY'
-  document.querySelector('#modal-title').textContent =
-    isRegister ? 'Join your neighbours.' : 'Welcome back.'
-  document.querySelector('#modal-description').textContent =
-    isRegister
-      ? 'Create an account to start giving and receiving help.'
-      : 'Sign in to connect with your neighbours.'
-  document.querySelector('#submit-auth').textContent =
-    isRegister ? 'Create Account' : 'Login'
-  document.querySelector('#switch-auth').textContent =
-    isRegister ? 'Login' : 'Register'
-  document.querySelector('#modal-switch').firstChild.textContent =
-    isRegister ? 'Already have an account? ' : 'New to Community Aid? '
-
-  registerFields.hidden = !isRegister
-  fullNameInput.required = isRegister
-  areaInput.required = isRegister
-  passwordInput.autocomplete = isRegister ? 'new-password' : 'current-password'
-
-  modal.querySelector('.auth-modal').scrollTop = 0
-  phoneInput.focus()
-}
-
-function closeAuth() {
-  modal.hidden = true
-  document.body.classList.remove('modal-open')
-}
-
-document.querySelector('#login-btn').addEventListener('click', () => openAuth('login'))
-document.querySelector('#register-btn').addEventListener('click', () => openAuth('register'))
-document.querySelector('#get-started-btn').addEventListener('click', () => openAuth('register'))
-document.querySelector('#close-modal').addEventListener('click', closeAuth)
-
-document.querySelector('#switch-auth').addEventListener('click', () => {
-  openAuth(authMode === 'login' ? 'register' : 'login')
-})
-
-modal.addEventListener('click', (event) => {
-  if (event.target === modal) closeAuth()
-})
-
-document.addEventListener('keydown', (event) => {
-  if (event.key === 'Escape' && !modal.hidden) closeAuth()
-})
-
-form.addEventListener('submit', (event) => {
-  event.preventDefault()
-
-  notice.textContent = authMode === 'register'
-    ? 'Registration screen is working! Real account creation will be connected when authentication is implemented.'
-    : 'Login screen is working! Real sign-in will be connected when authentication is implemented.'
-})
+initDashboard();
+initAuth();
