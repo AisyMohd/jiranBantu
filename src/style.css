@@ -1174,3 +1174,58 @@ h3 {
     padding: 22px;
   }
 }
+
+/* Dashboard heading and resident request button */
+#dashboard .dashboard-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+#dashboard #dashboard-description {
+  margin-bottom: 0;
+}
+
+#dashboard #need-help-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+@media (max-width: 520px) {
+  #dashboard .dashboard-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 16px;
+  }
+}
+
+
+/* DESIGN FORM CSS HERE */
+#dashboard #request-form-container form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+#dashboard #request-form-container input,
+#dashboard #request-form-container textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px;
+  border: 1px solid #d8e3dc;
+  border-radius: 8px;
+  font: inherit;
+}
+
+#dashboard #request-form-container label {
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+#dashboard #request-form-container button {
+  align-self: flex-start;
+}
+
