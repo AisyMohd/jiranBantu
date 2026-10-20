@@ -203,6 +203,7 @@ h1,
 h2,
 h3 {
   font-family: 'Manrope', sans-serif;
+  font-size: large;
 }
 
 .hero h1 {
@@ -1229,3 +1230,689 @@ h3 {
   align-self: flex-start;
 }
 
+
+/* =========================================
+   JIRANBANTU - NEW DASHBOARD DESIGN
+   Append at the END of your existing CSS
+========================================= */
+
+#dashboard.jb-dashboard {
+  --jb-green: #247d5b;
+  --jb-green-light: #e5f2e9;
+  --jb-bg: #faf8f2;
+  --jb-text: #173b38;
+  --jb-muted: #647575;
+  --jb-border: #eeeee8;
+
+  min-height: 100vh;
+  background: var(--jb-bg);
+  color: var(--jb-text);
+  font-family: 'DM Sans', sans-serif;
+}
+
+#dashboard.jb-dashboard[hidden] {
+  display: none !important;
+}
+
+#dashboard.jb-dashboard button {
+  font-family: inherit;
+}
+
+/* Header */
+
+#dashboard.jb-dashboard .jb-header {
+  position: relative;
+  top: auto;
+  z-index: 5;
+  width: 100%;
+  height: 56px;
+  padding: 0 5.5%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  background: #fff;
+  border-bottom: 1px solid #f0f0eb;
+  box-shadow: none;
+}
+
+#dashboard.jb-dashboard .jb-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  white-space: nowrap;
+  color: var(--jb-text);
+  text-decoration: none;
+  font-family: 'Manrope', sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+}
+
+#dashboard.jb-dashboard .jb-logo {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: var(--jb-green);
+  color: white;
+  font-size: 21px;
+}
+
+#dashboard.jb-dashboard .jb-brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+#dashboard.jb-dashboard .jb-brand-text strong {
+  font-size: 14px;
+}
+
+#dashboard.jb-dashboard .jb-brand-text small {
+  color: var(--jb-muted);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+#dashboard.jb-dashboard .jb-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+#dashboard.jb-dashboard #dashboard-user {
+  color: var(--jb-text);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+#dashboard.jb-dashboard .jb-header-btn {
+  position: relative;
+  min-height: 36px;
+  padding: 9px 12px;
+  border: 0;
+  border-radius: 11px;
+  background: #edf5ef;
+  color: #174e3b;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+#dashboard.jb-dashboard .jb-header-btn:hover {
+  background: #dceee1;
+}
+
+#dashboard.jb-dashboard .jb-notification-dot {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #e8ae40;
+}
+
+/* Dashboard two-column layout */
+
+#dashboard.jb-dashboard .jb-layout {
+  width: 89%;
+  max-width: 1350px;
+  margin: 26px auto 90px;
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  align-items: start;
+  gap: 21px;
+}
+
+#dashboard.jb-dashboard .jb-sidebar {
+  min-width: 0;
+  padding: 18px 10px 12px;
+  border: 1px solid var(--jb-border);
+  border-radius: 17px;
+  background: #fff;
+  box-shadow: 0 7px 25px #28372806;
+}
+
+#dashboard.jb-dashboard .jb-sidebar .jb-sidebar-role,
+#dashboard.jb-dashboard .jb-sidebar .jb-eyebrow {
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center !important;
+  font-weight: 700;
+}
+
+#dashboard.jb-dashboard .jb-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+#dashboard.jb-dashboard .jb-side-link {
+  width: 100%;
+  min-height: 36px;
+  padding: 10px 9px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--jb-text);
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+#dashboard.jb-dashboard .jb-side-link:hover,
+#dashboard.jb-dashboard .jb-side-link.active {
+  background: var(--jb-green-light);
+}
+
+#dashboard.jb-dashboard .jb-sidebar-tip {
+  margin-top: 12px;
+  padding: 12px 7px 0;
+  border-top: 1px solid var(--jb-border);
+}
+
+#dashboard.jb-dashboard .jb-sidebar-tip strong {
+  color: var(--jb-green);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+#dashboard.jb-dashboard .jb-sidebar-tip p {
+  margin: 5px 0 0;
+  color: var(--jb-muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+/* Welcome area */
+
+#dashboard.jb-dashboard .jb-content {
+  min-width: 0;
+}
+
+#dashboard.jb-dashboard .jb-welcome {
+  margin: 0 0 24px;
+}
+
+#dashboard.jb-dashboard {
+  margin: 0 0 5px;
+  color: var(--jb-green);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+#dashboard.jb-eyebrow {
+  margin: 0 0 8px;
+  padding: 0 9px;
+  color: var(--jb-green);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+#dashboard.jb-dashboard #dashboard-title {
+  margin: 0 0 8px;
+  color: #163a37;
+  font-family: 'Manrope', sans-serif;
+  font-size: clamp(32px, 3.5vw, 42px);
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -1px;
+}
+
+#dashboard.jb-dashboard #dashboard-description {
+  max-width: none;
+  margin: 0;
+  color: var(--jb-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+/* Two help cards */
+
+#dashboard.jb-dashboard .jb-help-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+#dashboard.jb-dashboard .jb-help-card {
+  min-width: 0;
+  min-height: 121px;
+  padding: 20px 17px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  border: 1px solid var(--jb-border);
+  border-radius: 17px;
+  background: #fff;
+  color: var(--jb-text);
+  text-align: left;
+  box-shadow: 0 7px 25px #28372806;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+#dashboard.jb-dashboard .jb-help-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px #28372812;
+}
+
+#dashboard.jb-dashboard .jb-help-icon {
+  margin-bottom: 10px;
+  font-size: 24px;
+  line-height: 1;
+}
+
+#dashboard.jb-dashboard .jb-card-title {
+  margin-bottom: 5px;
+  color: #176d65;
+  font-size: 16px;
+  font-weight: 400;
+}
+
+#dashboard.jb-dashboard .jb-card-description {
+  color: var(--jb-muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+/* My Requests summary
+   Overrides the older dashboard-placeholder styling */
+
+#dashboard.jb-dashboard .jb-summary-card,
+#dashboard.jb-dashboard .dashboard-placeholder.jb-summary-card {
+  min-width: 0;
+  padding: 17px;
+  border: 1px solid var(--jb-border);
+  border-radius: 17px;
+  background: #fff;
+  box-shadow: 0 7px 25px #28372806;
+}
+
+#dashboard.jb-dashboard .jb-summary-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+#dashboard.jb-dashboard #dashboard-panel-title {
+  margin: 0;
+  color: var(--jb-text);
+  font-family: 'Manrope', sans-serif;
+  font-size: 17px;
+  font-weight: 500;
+}
+
+#dashboard.jb-dashboard #dashboard-panel-description {
+  margin: 12px 0 0;
+  color: var(--jb-muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+#dashboard.jb-dashboard .jb-view-all {
+  padding: 3px 0;
+  border: 0;
+  background: transparent;
+  color: #176d65;
+  font-size: 11px;
+  text-decoration: underline;
+}
+
+/* Request form */
+
+#dashboard.jb-dashboard .jb-request-form {
+  margin-top: 16px;
+}
+
+#dashboard.jb-dashboard .jb-request-form h2 {
+  margin: 0 0 8px;
+  font-size: 20px;
+}
+
+#dashboard.jb-dashboard .jb-request-form > p {
+  margin: 0;
+  color: var(--jb-muted);
+  font-size: 12px;
+}
+
+#dashboard.jb-dashboard .jb-request-form form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+#dashboard.jb-dashboard .jb-request-form label {
+  margin-top: 5px;
+  color: var(--jb-text);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+#dashboard.jb-dashboard .jb-request-form input,
+#dashboard.jb-dashboard .jb-request-form textarea {
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid #dedfd8;
+  border-radius: 9px;
+  background: #fff;
+  color: var(--jb-text);
+  font: inherit;
+}
+
+#dashboard.jb-dashboard .jb-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-top: 8px;
+}
+
+#dashboard.jb-dashboard .jb-primary-btn,
+#dashboard.jb-dashboard .jb-secondary-btn {
+  padding: 10px 15px;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+#dashboard.jb-dashboard .jb-primary-btn {
+  border: 1px solid var(--jb-green);
+  background: var(--jb-green);
+  color: white;
+}
+
+#dashboard.jb-dashboard .jb-secondary-btn {
+  border: 1px solid #dfe5de;
+  background: white;
+  color: var(--jb-text);
+}
+
+/* Fixed bottom navigation */
+
+#dashboard.jb-dashboard .jb-bottom-nav {
+  position: fixed;
+  z-index: 10;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  min-height: 47px;
+  padding: 5px 4%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-top: 1px solid #eeeee8;
+  background: #fff;
+}
+
+#dashboard.jb-dashboard .jb-bottom-link {
+  padding: 11px 10px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--jb-text);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+#dashboard.jb-dashboard .jb-bottom-link:hover,
+#dashboard.jb-dashboard .jb-bottom-link.active {
+  background: var(--jb-green-light);
+}
+
+/* Responsive */
+
+@media (max-width: 700px) {
+  #dashboard.jb-dashboard .jb-header {
+    padding: 0 4%;
+    gap: 8px;
+  }
+
+  #dashboard.jb-dashboard #dashboard-user {
+    display: none;
+  }
+
+  #dashboard.jb-dashboard .jb-header-btn {
+    padding: 8px;
+    font-size: 10px;
+  }
+
+  #dashboard.jb-dashboard .jb-layout {
+    width: 92%;
+    margin-top: 22px;
+    grid-template-columns: 1fr;
+  }
+
+  #dashboard.jb-dashboard .jb-sidebar {
+    display: none;
+  }
+
+  #dashboard.jb-dashboard .jb-help-grid {
+    gap: 10px;
+  }
+
+  #dashboard.jb-dashboard .jb-help-card {
+    min-height: 140px;
+    padding: 15px 12px;
+  }
+
+  #dashboard.jb-dashboard .jb-card-title {
+    font-size: 14px;
+  }
+
+  #dashboard.jb-dashboard .jb-card-description {
+    font-size: 10px;
+  }
+
+  #dashboard.jb-dashboard .jb-bottom-nav {
+    padding: 5px 2%;
+    gap: 0;
+  }
+
+  #dashboard.jb-dashboard .jb-bottom-link {
+    padding: 10px 5px;
+    font-size: 9px;
+  }
+}
+
+@media (max-width: 420px) {
+  #dashboard.jb-dashboard .jb-brand-text small {
+    display: none;
+  }
+
+  #dashboard.jb-dashboard .jb-header-btn {
+    padding: 7px 5px;
+  }
+
+  #dashboard.jb-dashboard .jb-help-grid {
+    grid-template-columns: 1fr;
+  }
+
+  #dashboard.jb-dashboard .jb-bottom-link {
+    padding: 9px 3px;
+    font-size: 8px;
+  }
+}
+
+
+/* =========================================
+   HOME - ALL REQUESTS LIST
+========================================= */
+
+#dashboard.jb-dashboard .jb-home-actions {
+  display: flex;
+  justify-content: flex-start;
+  margin: 0 0 20px;
+}
+
+#dashboard.jb-dashboard .jb-home-actions .jb-primary-btn {
+  min-height: 40px;
+  padding: 11px 17px;
+  border-radius: 10px;
+  font-size: 12px;
+}
+
+#dashboard.jb-dashboard .jb-requests-section {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+#dashboard.jb-dashboard .jb-requests-heading {
+  margin-bottom: 13px;
+}
+
+#dashboard.jb-dashboard .jb-requests-heading h2 {
+  margin: 0;
+  color: var(--jb-text);
+  font-family: 'Manrope', sans-serif;
+  font-size: 21px;
+  font-weight: 600;
+}
+
+#dashboard.jb-dashboard .jb-requests-heading > p {
+  margin: 5px 0 0;
+  color: var(--jb-muted);
+  font-size: 12px;
+}
+
+#dashboard.jb-dashboard .jb-request-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#dashboard.jb-dashboard .jb-request-card {
+  min-width: 0;
+  padding: 15px 13px 13px;
+  border: 1px solid var(--jb-border);
+  border-radius: 17px;
+  background: #fff;
+  box-shadow: 0 5px 20px #28372805;
+}
+
+#dashboard.jb-dashboard .jb-request-card-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+#dashboard.jb-dashboard .jb-request-card-heading h3 {
+  margin: 0;
+  color: #172e2c;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+#dashboard.jb-dashboard .jb-request-status {
+  flex-shrink: 0;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+#dashboard.jb-dashboard .jb-request-status.open {
+  background: #e6f4e9;
+  color: #236c4b;
+}
+
+#dashboard.jb-dashboard .jb-request-status.unclaimed {
+  background: #fff0d5;
+  color: #99600b;
+}
+
+#dashboard.jb-dashboard .jb-request-status.accepted {
+  background: #e8efff;
+  color: #315f9a;
+}
+
+#dashboard.jb-dashboard .jb-request-meta {
+  margin: 9px 0 7px;
+  color: #687575;
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+#dashboard.jb-dashboard .jb-request-description {
+  margin: 0 0 7px;
+  color: #33413f;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+#dashboard.jb-dashboard .jb-request-state {
+  margin: 0 0 10px;
+  color: #647575;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+#dashboard.jb-dashboard .jb-request-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+#dashboard.jb-dashboard .jb-request-actions button {
+  min-height: 36px;
+  padding: 9px 13px;
+  border-radius: 10px;
+  font-size: 11px;
+}
+
+#dashboard.jb-dashboard .jb-request-actions .jb-primary-btn {
+  background: #26815d;
+  border-color: #26815d;
+}
+
+#dashboard.jb-dashboard .jb-request-actions .jb-secondary-btn {
+  background: #edf5ef;
+  border-color: #edf5ef;
+  color: #176d65;
+}
+
+#dashboard.jb-dashboard .jb-empty-message {
+  padding: 20px;
+  border-radius: 12px;
+  background: white;
+  color: var(--jb-muted);
+  font-size: 12px;
+}
+
+@media (max-width: 700px) {
+  #dashboard.jb-dashboard .jb-home-actions {
+    margin-bottom: 18px;
+  }
+
+  #dashboard.jb-dashboard .jb-requests-heading h2 {
+    font-size: 20px;
+  }
+
+  #dashboard.jb-dashboard .jb-request-card {
+    padding: 14px 13px;
+  }
+
+  #dashboard.jb-dashboard .jb-request-meta {
+    font-size: 10px;
+  }
+
+  #dashboard.jb-dashboard .jb-layout {
+    margin-bottom: 75px;
+  }
+}
