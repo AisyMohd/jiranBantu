@@ -1,5 +1,7 @@
 
 import { initRequestForm } from './request.js';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { auth, db } from '../firebase.js';
 
 let dashboard;
 let dashboardNav;
@@ -7,6 +9,7 @@ let landingNavbar;
 let landingMain;
 let landingFooter;
 let currentRole = 'resident';
+let currentPageId = 'overview';
 
 const dashboardPages = {
   resident: [
@@ -31,11 +34,88 @@ function openDashboardPage(pageId) {
 
   if (!page) return;
 
+  currentPageId = pageId;
   document.querySelector('#dashboard-panel-title').textContent =
     page.label;
 
-  document.querySelector('#dashboard-panel-description').textContent =
-    `${page.description} This page is a placeholder for now.`;
+  const description = document.querySelector('#dashboard-panel-description');
+  const requestList = document.querySelector('#dashboard-request-list');
+  requestList.hidden = pageId !== 'my-requests';
+  requestList.replaceChildren();
+
+  if (pageId === 'my-requests') {
+    description.textContent = page.description;
+    void loadMyRequests(requestList);
+    return;
+  }
+
+  description.textContent = page.description;
+}
+
+async function loadMyRequests(container) {
+  const userId = auth.currentUser?.uid;
+  if (!userId) {
+    container.textContent = 'Please log in to view your requests.';
+    return;
+  }
+
+  container.textContent = 'Loading your requests...';
+
+  try {
+    const requestsQuery = query(
+      collection(db, 'requests'),
+      where('requesterId', '==', userId)
+    );
+    const snapshot = await getDocs(requestsQuery);
+
+    if (currentPageId !== 'my-requests') return;
+
+    const requests = snapshot.docs
+      .map(request => ({ id: request.id, ...request.data() }))
+      .sort((first, second) => {
+        const firstTime = first.createdAt?.toMillis?.() || 0;
+        const secondTime = second.createdAt?.toMillis?.() || 0;
+        return secondTime - firstTime;
+      });
+
+    if (requests.length === 0) {
+      container.textContent = 'You have not submitted any requests yet.';
+      return;
+    }
+
+    container.replaceChildren(...requests.map(createRequestCard));
+  } catch (error) {
+    console.error('Error loading requests:', error);
+    container.textContent = 'Unable to load your requests. Please try again.';
+  }
+}
+
+function createRequestCard(request) {
+  const card = document.createElement('article');
+  card.className = 'request-list-card';
+
+  const heading = document.createElement('h3');
+  const taskNames = [
+    ...(Array.isArray(request.tasks) ? request.tasks : []),
+    ...(request.otherTask ? [request.otherTask] : [])
+  ];
+  heading.textContent = taskNames.length > 0
+    ? taskNames.join(', ')
+    : 'Help request';
+
+  const details = document.createElement('p');
+  const date = request.dateNeeded?.toDate?.();
+  const dateLabel = date
+    ? date.toLocaleDateString()
+    : 'Date not available';
+  details.textContent = `${request.area || 'Neighbourhood not specified'} · ${dateLabel}${request.timeNeeded ? ` at ${request.timeNeeded}` : ''}`;
+
+  const status = document.createElement('span');
+  status.className = 'request-list-status';
+  status.textContent = request.status || 'submitted';
+
+  card.append(heading, details, status);
+  return card;
 }
 
 export function initDashboard() {
@@ -55,7 +135,9 @@ export function initDashboard() {
     showLandingPage();
   });
 
-  initRequestForm();
+  initRequestForm({
+    onSubmitted: () => openDashboardPage('my-requests')
+  });
 }
 
 export function showDashboard(role, profile = {}) {

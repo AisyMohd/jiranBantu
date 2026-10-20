@@ -7,7 +7,7 @@ import {
 
 import { auth, db } from "../firebase.js";
 
-// Firestore punya part
+// Firestore/base punya part
 export const createRequest = async (formData, currentUser, requesterName) => {
   if (!currentUser || !currentUser.uid) {
     throw new Error("Please log in before submitting a request.");
@@ -67,7 +67,7 @@ export const createRequest = async (formData, currentUser, requesterName) => {
 
 /*Form interactions*/
 
-export function initRequestForm() {
+export function initRequestForm({ onSubmitted } = {}) {
   const container = document.querySelector("#request-form-container");
   const openButton = document.querySelector("#need-help-btn");
   if (!container || !openButton) return;
@@ -169,6 +169,7 @@ export function initRequestForm() {
       setTimeout(() => {
         showMessage("", "");
         closeForm();
+        onSubmitted?.();
       }, 1800);
     } catch (error) {
       console.error("Error submitting request:", error);

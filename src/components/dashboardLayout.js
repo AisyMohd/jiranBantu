@@ -35,8 +35,9 @@ export function dashboardLayout() {
         <section class="dashboard-placeholder" id="dashboard-placeholder">
         <h2 id="dashboard-panel-title">Welcome!</h2>
         <p id="dashboard-panel-description">
-            Your dashboard is ready. Detailed pages will be added by the team.
+            Your dashboard is ready. Choose a page to get started.
         </p>
+        <div id="dashboard-request-list" class="request-list" hidden></div>
         </section>
 
       </main>
