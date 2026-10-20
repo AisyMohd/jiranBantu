@@ -4,7 +4,7 @@ export function navbar() {
     <header class="navbar">
       <a class="brand" href="#" aria-label="JiranBantu home">
         <span class="brand-icon">✳</span>
-        <span>Community<span class="brand-accent">Aid</span></span>
+        <span>Jiran<span class="brand-accent">Bantu</span></span>
       </a>
 
       <nav class="nav-links" aria-label="Main navigation">
