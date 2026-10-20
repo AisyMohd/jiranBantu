@@ -1,17 +1,22 @@
 
 import '../communityDashboard.css';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../firebase.js';
 
-export {
+import {
   renderCommunityDashboard,
   renderCommunityRequestCard
 } from '../components/communityDashboard.js';
 
-// Time thresholds in milliseconds
+export {
+  renderCommunityDashboard,
+  renderCommunityRequestCard
+};
+
+// Time thresholds
 const TWO_HOURS = 2 * 60 * 60 * 1000;
 const THREE_HOURS = 3 * 60 * 60 * 1000;
 
-// Convert Firestore Timestamp, Date, or date string
-// into a JavaScript Date.
 function toDate(value) {
   if (!value) return null;
 
@@ -21,9 +26,10 @@ function toDate(value) {
     date = value.toDate();
   } else if (value instanceof Date) {
     date = value;
-  } else if (typeof value === 'number') {
-    date = new Date(value);
-  } else if (typeof value === 'string') {
+  } else if (
+    typeof value === 'number' ||
+    typeof value === 'string'
+  ) {
     date = new Date(value);
   } else {
     return null;
@@ -32,34 +38,17 @@ function toDate(value) {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
-// Determine whether a request needs attention
-
 export function requestNeedsAttention(request, now = new Date()) {
-  const status = String(request.status || '')
-    .trim()
-    .toLowerCase();
+  const status = String(request.status || '').trim().toLowerCase();
 
-  // Accepted, completed and cancelled are excluded.
   if (['accepted', 'completed', 'cancelled'].includes(status)) {
     return false;
   }
 
-  // Unclaimed requests always need attention.
-  if (status === 'unclaimed') {
-    return true;
-  }
+  if (status === 'unclaimed') return true;
 
-  // Urgent requests need attention immediately,
-  // provided they are still open.
-  if (status === 'open' && request.isUrgent === true) {
-    return true;
-  }
-
-  return false;
+  return status === 'open' && request.isUrgent === true;
 }
-
-
-// Get only requests requiring attention
 
 export function getAttentionRequests(requests, now = new Date()) {
   const priority = {
@@ -71,45 +60,31 @@ export function getAttentionRequests(requests, now = new Date()) {
 
   return requests
     .filter(request => requestNeedsAttention(request, now))
-    .sort((a, b) => {
-      const reasonA = getAttentionReason(a, now);
-      const reasonB = getAttentionReason(b, now);
-
-      const priorityA = priority[reasonA] ?? 99;
-      const priorityB = priority[reasonB] ?? 99;
-
-      return priorityA - priorityB;
-    });
+    .sort((a, b) =>
+      (priority[getAttentionReason(a, now)] ?? 99) -
+      (priority[getAttentionReason(b, now)] ?? 99)
+    );
 }
 
-
-
 export function getEffectiveStatus(request, now = new Date()) {
-  const status = String(request.status || '')
-    .trim()
-    .toLowerCase();
+  const status = String(request.status || '').trim().toLowerCase();
 
-  // Only open requests can become unclaimed.
-  if (status !== 'open') {
-    return status;
-  }
+  if (status !== 'open') return status;
 
   const submittedAt = toDate(request.createdAt);
   const neededAt = toDate(request.dateNeeded);
 
   const noVolunteerAfterTwoHours =
-    submittedAt !== null &&
+    submittedAt &&
     now.getTime() - submittedAt.getTime() >= TWO_HOURS;
 
   const overdueThreeHours =
-    neededAt !== null &&
+    neededAt &&
     now.getTime() - neededAt.getTime() >= THREE_HOURS;
 
-  if (noVolunteerAfterTwoHours || overdueThreeHours) {
-    return 'unclaimed';
-  }
-
-  return 'open';
+  return noVolunteerAfterTwoHours || overdueThreeHours
+    ? 'unclaimed'
+    : 'open';
 }
 
 export function prepareCommunityRequests(requests, now = new Date()) {
@@ -119,31 +94,22 @@ export function prepareCommunityRequests(requests, now = new Date()) {
   }));
 }
 
-
 export function getAttentionReason(request, now = new Date()) {
-  const status = String(request.status || '')
-    .trim()
-    .toLowerCase();
+  const status = String(request.status || '').trim().toLowerCase();
 
-  // Requests already handled don't need attention
   if (['accepted', 'completed', 'cancelled'].includes(status)) {
     return null;
   }
 
-  // Urgent open requests
   if (status === 'open' && request.isUrgent === true) {
     return 'Urgent Request';
   }
 
-  // Only unclaimed requests continue below
-  if (status !== 'unclaimed') {
-    return null;
-  }
+  if (status !== 'unclaimed') return null;
 
   const neededAt = toDate(request.dateNeeded);
   const submittedAt = toDate(request.createdAt);
 
-  // Overdue by 3 hours
   if (
     neededAt &&
     now.getTime() - neededAt.getTime() >= THREE_HOURS
@@ -151,7 +117,6 @@ export function getAttentionReason(request, now = new Date()) {
     return 'Overdue Request';
   }
 
-  // No volunteer after 2 hours
   if (
     submittedAt &&
     now.getTime() - submittedAt.getTime() >= TWO_HOURS
@@ -162,3 +127,102 @@ export function getAttentionReason(request, now = new Date()) {
   return 'Unclaimed Request';
 }
 
+// Connect the existing dashboard UI to Firestore.
+export async function loadCommunityDashboard() {
+  const requestList = document.querySelector('#community-request-list');
+  const attentionList = document.querySelector('#community-attention-list');
+
+  if (!requestList || !attentionList) return;
+
+  requestList.innerHTML = '<p>Loading requests...</p>';
+  attentionList.innerHTML = '<p>Loading requests...</p>';
+
+  try {
+    const snapshot = await getDocs(collection(db, 'requests'));
+
+    const requests = snapshot.docs.map(documentSnapshot => {
+    const data = documentSnapshot.data();
+
+    // Convert the form's tasks array into a readable title.
+    const taskNames = Array.isArray(data.tasks) ? data.tasks : [];
+
+    if (data.otherTask?.trim()) {
+      taskNames.push(data.otherTask.trim());
+    }
+
+    const task = taskNames.length
+      ? taskNames.join(', ')
+      : 'Untitled Request';
+
+    // Your form uses "submitted", but the dashboard
+    // currently expects "open" for a new request.
+    const rawStatus = String(data.status || 'submitted')
+      .trim()
+      .toLowerCase();
+
+    const status = rawStatus === 'submitted'
+      ? 'open'
+      : rawStatus;
+
+    return {
+      id: documentSnapshot.id,
+      ...data,
+      task,
+      fasa: data.area || 'Not specified',
+      status,
+      isUrgent: ['urgent', 'emergency'].includes(
+        String(data.priority || '').toLowerCase()
+      ),
+      dateNeeded: data.dateNeeded,
+      timeNeeded: data.timeNeeded || '',
+      details: data.details || '',
+      requesterName: data.requesterName || 'Resident'
+    };
+  });
+
+    const preparedRequests = prepareCommunityRequests(requests);
+    const attentionRequests = getAttentionRequests(preparedRequests);
+
+    // Update the four statistic cards.
+    const counts = {
+      'stat-open': preparedRequests.filter(r => r.status === 'open').length,
+      'stat-accepted': preparedRequests.filter(r => r.status === 'accepted').length,
+      'stat-unclaimed': preparedRequests.filter(r => r.status === 'unclaimed').length,
+      'stat-completed': preparedRequests.filter(r => r.status === 'completed').length
+    };
+
+    Object.entries(counts).forEach(([elementId, count]) => {
+      const element = document.getElementById(elementId);
+      if (element) element.textContent = count;
+    });
+
+    // Render every request using your friend's existing card design.
+    requestList.innerHTML = preparedRequests.length
+      ? preparedRequests.map(request =>
+          renderCommunityRequestCard({
+            ...request,
+            attentionReason: getAttentionReason(request)
+          })
+        ).join('')
+      : '<p>No requests have been submitted yet.</p>';
+
+    // Render only requests that need attention.
+    attentionList.innerHTML = attentionRequests.length
+      ? attentionRequests.map(request =>
+          renderCommunityRequestCard({
+            ...request,
+            attentionReason: getAttentionReason(request)
+          })
+        ).join('')
+      : '<p>No requests currently need attention.</p>';
+
+  } catch (error) {
+    console.error('Failed to load community requests:', error);
+
+    requestList.innerHTML =
+      '<p>Unable to load requests. Please check your connection and Firebase permissions.</p>';
+
+    attentionList.innerHTML =
+      '<p>Unable to load requests.</p>';
+  }
+}

@@ -1,22 +1,44 @@
+
 import {
   collection,
   addDoc,
   serverTimestamp,
-  Timestamp
+  Timestamp,
+  doc,
+  getDoc
 } from "firebase/firestore";
 
 import { auth, db } from "../firebase.js";
 
-// Firestore/base punya part
-export const createRequest = async (formData, currentUser, requesterName) => {
-  if (!currentUser || !currentUser.uid) {
+export const createRequest = async (formData, currentUser) => {
+  if (!currentUser?.uid) {
     throw new Error("Please log in before submitting a request.");
   }
 
-// tick task, can be more than one (bincang again)
+  // Retrieve the logged-in resident's profile
+  const residentRef = doc(db, "residents", currentUser.uid);
+  const residentSnap = await getDoc(residentRef);
+
+  if (!residentSnap.exists()) {
+    throw new Error(
+      "Resident profile not found. Please contact support."
+    );
+  }
+
+  const residentData = residentSnap.data();
+  const requesterName = residentData.fullName;
+
+  if (typeof requesterName !== "string" || !requesterName.trim()) {
+    throw new Error(
+      "Your name is missing from your resident profile."
+    );
+  }
+
+  // Validate task selection
   const hasTask =
     (Array.isArray(formData.tasks) && formData.tasks.length > 0) ||
     Boolean(formData.otherTask?.trim());
+
   const validPriorities = ["normal", "urgent", "emergency"];
 
   if (
@@ -26,34 +48,44 @@ export const createRequest = async (formData, currentUser, requesterName) => {
     !formData.timeNeeded?.trim() ||
     !validPriorities.includes(formData.priority)
   ) {
-    throw new Error("Please complete all required fields, choose a priority, and select at least one task.");
+    throw new Error(
+      "Please complete all required fields, choose a priority, and select at least one task."
+    );
   }
 
-  // The date must be in the future.
+  // Validate that the requested date is in the future
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const requestedDate = new Date(`${formData.dateNeeded}T00:00:00`);
 
-  if (Number.isNaN(requestedDate.getTime()) || requestedDate <= today) {
+  const requestedDate = new Date(
+    `${formData.dateNeeded}T00:00:00`
+  );
+
+  if (
+    Number.isNaN(requestedDate.getTime()) ||
+    requestedDate <= today
+  ) {
     throw new Error("Please select a future date.");
   }
 
+  // Prepare the request document
   const requestData = {
-    //form resident
     area: formData.area.trim(),
     tasks: Array.isArray(formData.tasks) ? formData.tasks : [],
     otherTask: formData.otherTask?.trim() || "",
     dateNeeded: Timestamp.fromDate(requestedDate),
     timeNeeded: formData.timeNeeded.trim(),
     details: formData.details?.trim() || "",
-    femaleVolunteerPreferred: Boolean(formData.femaleVolunteerPreferred),
+    femaleVolunteerPreferred: Boolean(
+      formData.femaleVolunteerPreferred
+    ),
     priority: formData.priority,
 
-    // From the logged-in user
+    // Resident profile information
     requesterId: currentUser.uid,
-    requesterName: requesterName || currentUser.displayName || "Resident",
+    requesterName: requesterName.trim(),
 
-    // Set automatically
+    // System-generated fields
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
     status: "submitted",
@@ -61,9 +93,14 @@ export const createRequest = async (formData, currentUser, requesterName) => {
     needsAttention: false
   };
 
-  const docRef = await addDoc(collection(db, "requests"), requestData);
+  const docRef = await addDoc(
+    collection(db, "requests"),
+    requestData
+  );
+
   return docRef.id;
 };
+
 
 /*Form interactions*/
 

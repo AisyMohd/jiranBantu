@@ -157,7 +157,11 @@ ${attentionReason ? `
       <p class="community-request-meta">
         ${escapeHTML(requesterName)} ·
         ${escapeHTML(fasa)} ·
-        ${escapeHTML(dateNeeded || 'Date not specified')}
+        ${escapeHTML(
+          dateNeeded && typeof dateNeeded.toDate === 'function'
+            ? dateNeeded.toDate().toLocaleDateString('en-MY')
+            : dateNeeded || 'Date not specified'
+          )}${request.timeNeeded ? ` · ${escapeHTML(request.timeNeeded)}` : ''}
       </p>
 
       

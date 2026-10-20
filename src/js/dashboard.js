@@ -2,6 +2,7 @@
 import { initRequestForm } from './request.js';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { auth, db } from '../firebase.js';
+import { renderCommunityDashboard, loadCommunityDashboard } from './communityDashboard.js';
 
 let dashboard;
 let dashboardNav;
@@ -35,21 +36,40 @@ function openDashboardPage(pageId) {
   if (!page) return;
 
   currentPageId = pageId;
-  document.querySelector('#dashboard-panel-title').textContent =
-    page.label;
 
+  const panelTitle = document.querySelector('#dashboard-panel-title');
   const description = document.querySelector('#dashboard-panel-description');
   const requestList = document.querySelector('#dashboard-request-list');
-  requestList.hidden = pageId !== 'my-requests';
+  const communityMount = document.querySelector('#community-dashboard-mount');
+  const dashboardPlaceholder = document.querySelector('#dashboard-placeholder');
+
+  const isCommunityOverview =
+    currentRole === 'community' && pageId === 'overview';
+
+  // Update the standard dashboard panel.
+  panelTitle.hidden = isCommunityOverview;
+  description.hidden = isCommunityOverview;
+  requestList.hidden = isCommunityOverview || pageId !== 'my-requests';
+
+  panelTitle.textContent = page.label;
+  description.textContent = page.description;
+
   requestList.replaceChildren();
 
-  if (pageId === 'my-requests') {
-    description.textContent = page.description;
-    void loadMyRequests(requestList);
+  // Show the dedicated Community Dashboard UI.
+  communityMount.hidden = !isCommunityOverview;
+
+  if (isCommunityOverview) {
+    communityMount.innerHTML = renderCommunityDashboard();
     return;
   }
 
-  description.textContent = page.description;
+  // Reset the mount when navigating away.
+  communityMount.replaceChildren();
+
+  if (pageId === 'my-requests') {
+    void loadMyRequests(requestList);
+  }
 }
 
 async function loadMyRequests(container) {
@@ -144,11 +164,19 @@ export function showDashboard(role, profile = {}) {
   currentRole = role === 'community' ? 'community' : 'resident';
 
   const isCommunity = currentRole === 'community';
-  const needHelpButton = document.querySelector('#need-help-btn');
 
-if (needHelpButton) {
-  needHelpButton.hidden = isCommunity;
-}
+  const needHelpButton = document.querySelector('#need-help-btn');
+  const residentContent = document.querySelector(
+    '#resident-dashboard-content'
+  );
+  const communityMount = document.querySelector(
+    '#community-dashboard-mount'
+  );
+
+  if (needHelpButton) {
+    needHelpButton.hidden = isCommunity;
+  }
+
   landingNavbar.hidden = true;
   landingMain.hidden = true;
   landingFooter.hidden = true;
@@ -157,6 +185,7 @@ if (needHelpButton) {
   dashboard.hidden = false;
   document.body.classList.remove('modal-open');
 
+  // Shared navbar and heading
   document.querySelector('#dashboard-user').textContent =
     profile.fullName || (isCommunity ? 'Community Team' : 'Resident');
 
@@ -171,15 +200,33 @@ if (needHelpButton) {
       ? 'Coordinate support and monitor requests across your community.'
       : 'Ask for help, offer help, and support your neighbours.';
 
-  dashboardNav.innerHTML = dashboardPages[currentRole].map(page => `
-    <button class="dashboard-card" type="button" data-page="${page.id}">
-      <h3>${page.label}</h3>
-      <p>${page.description}</p>
-      <span>Open page →</span>
-    </button>
-  `).join('');
+  if (isCommunity) {
+    // Show the separate Community Dashboard.
+    dashboardNav.innerHTML = '';
+    residentContent.hidden = true;
 
-  openDashboardPage('overview');
+    communityMount.hidden = false;
+    communityMount.innerHTML = renderCommunityDashboard();
+
+    // Do not call openDashboardPage() for community here.
+    loadCommunityDashboard();
+  } else {
+    // Show the existing Resident Dashboard.
+    communityMount.hidden = true;
+    communityMount.replaceChildren();
+
+    residentContent.hidden = false;
+
+    dashboardNav.innerHTML = dashboardPages.resident.map(page => `
+      <button class="dashboard-card" type="button" data-page="${page.id}">
+        <h3>${page.label}</h3>
+        <p>${page.description}</p>
+        <span>Open page →</span>
+      </button>
+    `).join('');
+
+    openDashboardPage('overview');
+  }
 }
 
 export function showLandingPage() {
@@ -189,6 +236,3 @@ export function showLandingPage() {
   landingFooter.hidden = false;
 }
 
-// import {
-//   renderCommunityDashboard
-// } from '../components/communityDashboard.js';
