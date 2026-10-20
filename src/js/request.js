@@ -6,27 +6,27 @@ import {
 } from "firebase/firestore";
 
 import { auth, db } from "../firebase.js";
-import { requestForm } from "../components/requestForm.js";
 
-/* ---------- Save to Firestore ---------- */
-
+// Firestore punya part
 export const createRequest = async (formData, currentUser, requesterName) => {
   if (!currentUser || !currentUser.uid) {
     throw new Error("Please log in before submitting a request.");
   }
 
-  // A request needs at least one task: a ticked card OR something in "other".
+// tick task, can be more than one (bincang again)
   const hasTask =
     (Array.isArray(formData.tasks) && formData.tasks.length > 0) ||
     Boolean(formData.otherTask?.trim());
+  const validPriorities = ["normal", "urgent", "emergency"];
 
   if (
     !formData.area?.trim() ||
     !hasTask ||
     !formData.dateNeeded ||
-    !formData.timeNeeded?.trim()
+    !formData.timeNeeded?.trim() ||
+    !validPriorities.includes(formData.priority)
   ) {
-    throw new Error("Please complete all required fields and choose at least one task.");
+    throw new Error("Please complete all required fields, choose a priority, and select at least one task.");
   }
 
   // The date must be in the future.
@@ -39,7 +39,7 @@ export const createRequest = async (formData, currentUser, requesterName) => {
   }
 
   const requestData = {
-    // Entered by the resident
+    //form resident
     area: formData.area.trim(),
     tasks: Array.isArray(formData.tasks) ? formData.tasks : [],
     otherTask: formData.otherTask?.trim() || "",
@@ -47,6 +47,7 @@ export const createRequest = async (formData, currentUser, requesterName) => {
     timeNeeded: formData.timeNeeded.trim(),
     details: formData.details?.trim() || "",
     femaleVolunteerPreferred: Boolean(formData.femaleVolunteerPreferred),
+    priority: formData.priority,
 
     // From the logged-in user
     requesterId: currentUser.uid,
@@ -64,13 +65,13 @@ export const createRequest = async (formData, currentUser, requesterName) => {
   return docRef.id;
 };
 
-/* ---------- Form interactions ---------- */
+/*Form interactions*/
 
 export function initRequestForm() {
   const container = document.querySelector("#request-form-container");
-  if (!container) return;
+  const openButton = document.querySelector("#need-help-btn");
+  if (!container || !openButton) return;
 
-  // Put our form inside the existing container.
   container.innerHTML = requestForm();
 
   const form = container.querySelector("#request-form");
@@ -79,7 +80,7 @@ export function initRequestForm() {
   const otherWrap = container.querySelector("#rf-other-wrap");
   const dateInput = container.querySelector("#rf-date");
 
-  // Earliest date = tomorrow (local time).
+  //date
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   dateInput.min = [
@@ -101,10 +102,29 @@ export function initRequestForm() {
 
   const closeForm = () => {
     container.hidden = true;
-    document.querySelector("#dashboard-placeholder").hidden = false;
+    document.body.classList.remove("modal-open");
+    openButton.focus();
   };
 
-  // Click a task card to select / unselect it.
+  const resetAndCloseForm = () => {
+    resetForm();
+    showMessage("", "");
+    closeForm();
+  };
+
+  openButton.addEventListener("click", () => {
+    container.hidden = false;
+    document.body.classList.add("modal-open");
+    container.querySelector("#rf-close").focus();
+  });
+
+  container.querySelector("#rf-close").addEventListener("click", resetAndCloseForm);
+
+  container.addEventListener("click", event => {
+    if (event.target === container) resetAndCloseForm();
+  });
+
+  //Choose task(s)
   form.addEventListener("click", event => {
     const card = event.target.closest(".rf-card");
     if (!card) return;
@@ -116,10 +136,12 @@ export function initRequestForm() {
   });
 
   // Cancel
-  container.querySelector("#rf-cancel").addEventListener("click", () => {
-    resetForm();
-    showMessage("", "");
-    closeForm();
+  container.querySelector("#rf-cancel").addEventListener("click", resetAndCloseForm);
+
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && !container.hidden) {
+      resetAndCloseForm();
+    }
   });
 
   // Submit
@@ -133,7 +155,8 @@ export function initRequestForm() {
       timeNeeded: form.querySelector("#rf-time").value,
       area: form.querySelector("#rf-area").value,
       details: form.querySelector("#rf-details").value,
-      femaleVolunteerPreferred: form.querySelector("#rf-female").checked
+      femaleVolunteerPreferred: form.querySelector("#rf-female").checked,
+      priority: form.querySelector('input[name="priority"]:checked')?.value
     };
 
     submitBtn.disabled = true;
@@ -158,80 +181,91 @@ export function initRequestForm() {
 
 export function requestForm() {
   return `
-    <style>
-      .rf-label { display:block; margin:16px 0 6px; font-weight:500; }
-      .rf-cards { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-      .rf-card {
-        padding:16px; text-align:left; font-weight:700; cursor:pointer;
-        background:#fff; border:1.5px solid #dfe5e1; border-radius:14px;
-      }
-      .rf-card[aria-pressed="true"] { border-color:#247a54; background:#eaf5ef; }
-      .rf-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-      .rf-input {
-        width:100%; padding:12px; font:inherit; box-sizing:border-box;
-        border:1.5px solid #dfe5e1; border-radius:10px; background:#fff;
-      }
-      .rf-check { display:flex; gap:8px; align-items:center; margin-top:16px; }
-      .rf-actions { display:grid; gap:10px; margin-top:20px; }
-      #request-message { margin-top:12px; font-weight:500; }
-      #request-message.rf-error { color:#b3261e; }
-      #request-message.rf-success { color:#247a54; }
-    </style>
+    <section class="request-modal" role="dialog" aria-modal="true" aria-labelledby="request-modal-title">
+      <button class="modal-close" id="rf-close" type="button" aria-label="Close dialog">×</button>
+      <h2 id="request-modal-title">What Help Do You Need?</h2>
+      <p>A few details will help a neighbour understand your request.</p>
 
-    <h2>What Help Do You Need?</h2>
-    <p>A few details will help a neighbour understand your request.</p>
+      <form id="request-form" novalidate>
+        <fieldset class="rf-priority">
+          <legend class="rf-label">How urgent is this request? *</legend>
+          <div class="rf-priority-options">
+            <label class="rf-priority-option">
+              <input type="radio" name="priority" value="normal" checked required>
+              <span class="rf-priority-content">
+                <strong>Normal</strong>
+                <small>Help needed as planned</small>
+              </span>
+            </label>
+            <label class="rf-priority-option">
+              <input type="radio" name="priority" value="urgent" required>
+              <span class="rf-priority-content">
+                <strong>Urgent</strong>
+                <small>Help needed soon</small>
+              </span>
+            </label>
+            <label class="rf-priority-option">
+              <input type="radio" name="priority" value="emergency" required>
+              <span class="rf-priority-content">
+                <strong>Emergency</strong>
+                <small>Immediate, serious situation</small>
+              </span>
+            </label>
+          </div>
+          <p class="rf-emergency-note">For immediate danger or a life-threatening emergency, contact local emergency services directly. This form does not provide emergency response.</p>
+        </fieldset>
 
-    <form id="request-form" novalidate>
-      <span class="rf-label">Type of assistance *</span>
-      <div class="rf-cards">
-        <button type="button" class="rf-card" data-task="Buy groceries" aria-pressed="false">🛍️ Buy groceries</button>
-        <button type="button" class="rf-card" data-task="Transport" aria-pressed="false">🚗 Transport</button>
-        <button type="button" class="rf-card" data-task="Household Help" aria-pressed="false">🏠 Household Help</button>
-        <button type="button" class="rf-card" data-task="Other" aria-pressed="false">🤍 Other</button>
-      </div>
-
-      <div id="rf-other-wrap" hidden>
-        <label class="rf-label" for="rf-other">Tell us what you need</label>
-        <input class="rf-input" type="text" id="rf-other" placeholder="e.g. Help carry a parcel">
-      </div>
-
-      <div class="rf-row">
-        <div>
-          <label class="rf-label" for="rf-date">Date needed *</label>
-          <input class="rf-input" type="date" id="rf-date" required>
+        <span class="rf-label">Type of assistance *</span>
+        <div class="rf-cards">
+          <button type="button" class="rf-card" data-task="Buy groceries" aria-pressed="false">🛍️ Buy groceries</button>
+          <button type="button" class="rf-card" data-task="Transport" aria-pressed="false">🚗 Transport</button>
+          <button type="button" class="rf-card" data-task="Household Help" aria-pressed="false">🏠 Household Help</button>
+          <button type="button" class="rf-card" data-task="Other" aria-pressed="false">🤍 Other</button>
         </div>
-        <div>
-          <label class="rf-label" for="rf-time">Time needed *</label>
-          <input class="rf-input" type="time" id="rf-time" required>
+
+        <div id="rf-other-wrap" hidden>
+          <label class="rf-label" for="rf-other">Tell us what you need</label>
+          <input class="rf-input" type="text" id="rf-other" placeholder="e.g. Help carry a parcel">
         </div>
-      </div>
 
-      <label class="rf-label" for="rf-area">Neighbourhood *</label>
-      <select class="rf-input" id="rf-area" required>
-        <option value="">Select your Fasa</option>
-        <option>Fasa 1</option>
-        <option>Fasa 2</option>
-        <option>Fasa 3</option>
-        <option>Fasa 4</option>
-        <option>Fasa 5</option>
-        <option>Fasa 6</option>
-      </select>
+        <div class="rf-row">
+          <div>
+            <label class="rf-label" for="rf-date">Date needed *</label>
+            <input class="rf-input" type="date" id="rf-date" required>
+          </div>
+          <div>
+            <label class="rf-label" for="rf-time">Time needed *</label>
+            <input class="rf-input" type="time" id="rf-time" required>
+          </div>
+        </div>
 
-      <label class="rf-label" for="rf-details">Short description (optional)</label>
-      <textarea class="rf-input" id="rf-details" rows="4"
-        placeholder="For example, a few groceries from the nearby shop"></textarea>
+        <label class="rf-label" for="rf-area">Neighbourhood *</label>
+        <select class="rf-input" id="rf-area" required>
+          <option value="">Select your Fasa</option>
+          <option>Fasa 1</option>
+          <option>Fasa 2</option>
+          <option>Fasa 3</option>
+          <option>Fasa 4</option>
+          <option>Fasa 5</option>
+          <option>Fasa 6</option>
+        </select>
 
-      <label class="rf-check">
-        <input type="checkbox" id="rf-female">
-        I prefer a female volunteer
-      </label>
+        <label class="rf-label" for="rf-details">Short description (optional)</label>
+        <textarea class="rf-input" id="rf-details" rows="4"
+          placeholder="For example, a few groceries from the nearby shop"></textarea>
 
-      <div class="rf-actions">
-        <button type="submit" class="btn btn-primary" id="rf-submit">Submit Request</button>
-        <button type="button" class="btn btn-outline" id="rf-cancel">Cancel</button>
-      </div>
+        <label class="rf-check">
+          <input type="checkbox" id="rf-female">
+          I prefer a female volunteer
+        </label>
 
-      <p id="request-message" role="status"></p>
-    </form>
+        <div class="rf-actions">
+          <button type="submit" class="btn btn-primary" id="rf-submit">Submit Request</button>
+          <button type="button" class="btn btn-outline" id="rf-cancel">Cancel</button>
+        </div>
+
+        <p id="request-message" role="status"></p>
+      </form>
+    </section>
   `;
 }

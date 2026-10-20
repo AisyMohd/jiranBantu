@@ -1202,30 +1202,211 @@ h3 {
 }
 
 
-/* DESIGN FORM CSS HERE */
-#dashboard #request-form-container form {
+.request-modal-backdrop[hidden] {
+  display: none;
+}
+
+.request-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  overflow-y: auto;
+  padding: 20px;
+  background: rgba(25, 42, 32, 0.56);
+  backdrop-filter: blur(5px);
+}
+
+.request-modal {
+  position: relative;
+  width: min(100%, 560px);
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  padding: 30px;
+  border: 1px solid #eef0e9;
+  border-radius: 20px;
+  background: var(--cream);
+  box-shadow: 0 25px 90px #12271b35;
+}
+
+.request-modal h2 {
+  margin: 0 44px 8px 0;
+  color: #183c30;
+  font-size: 1.5rem;
+}
+
+.request-modal > p {
+  margin-bottom: 20px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.request-modal form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-top: 24px;
+  gap: 8px;
 }
 
-#dashboard #request-form-container input,
-#dashboard #request-form-container textarea {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 12px;
-  border: 1px solid #d8e3dc;
-  border-radius: 8px;
-  font: inherit;
+.rf-priority {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
 }
 
-#dashboard #request-form-container label {
+.rf-priority-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.rf-priority-option {
+  position: relative;
+  display: flex;
+  min-height: 68px;
+  padding: 10px;
+  border: 1.5px solid #dfe5e1;
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.rf-priority-option:has(input:checked) {
+  border-color: var(--green);
+  background: var(--green-light);
+  box-shadow: 0 0 0 1px var(--green);
+}
+
+.rf-priority-option input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.rf-priority-option:has(input:focus-visible) {
+  outline: 3px solid #9bc7a8;
+  outline-offset: 2px;
+}
+
+.rf-priority-option:has(input[value="urgent"]:checked) {
+  border-color: #b36a00;
+  background: #fff4df;
+  box-shadow: 0 0 0 1px #b36a00;
+}
+
+.rf-priority-option:has(input[value="emergency"]:checked) {
+  border-color: #b3261e;
+  background: #fff0ef;
+  box-shadow: 0 0 0 1px #b3261e;
+}
+
+.rf-priority-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rf-priority-content strong {
+  font-size: 13px;
+}
+
+.rf-priority-content small {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.rf-emergency-note {
+  margin: 10px 0 0;
+  color: #8b2c26;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.rf-label {
+  display: block;
+  margin: 12px 0 4px;
+  font-size: 13px;
   font-weight: 600;
-  margin-top: 8px;
 }
 
-#dashboard #request-form-container button {
-  align-self: flex-start;
+.rf-cards,
+.rf-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
 }
 
+.rf-card {
+  min-height: 54px;
+  padding: 12px;
+  border: 1.5px solid #dfe5e1;
+  border-radius: 12px;
+  background: #fff;
+  text-align: left;
+  font-weight: 700;
+}
+
+.rf-card[aria-pressed="true"] {
+  border-color: #247a54;
+  background: #eaf5ef;
+}
+
+.rf-input {
+  width: 100%;
+  font: inherit;
+  padding: 11px;
+  border: 1.5px solid #dfe5e1;
+  border-radius: 9px;
+  background: #fff;
+}
+
+.rf-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 13px;
+}
+
+.rf-actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+#request-message {
+  margin: 4px 0 0;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+#request-message.rf-error {
+  color: #b3261e;
+}
+
+#request-message.rf-success {
+  color: #247a54;
+}
+
+@media (max-width: 520px) {
+  .request-modal {
+    padding: 24px 18px;
+  }
+
+  .rf-cards,
+  .rf-row {
+    grid-template-columns: 1fr;
+  }
+
+  .rf-priority-options {
+    grid-template-columns: 1fr;
+  }
+}
+
+.request-modal label {
+  font-weight: 600;
+}

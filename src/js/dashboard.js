@@ -1,4 +1,6 @@
 
+import { initRequestForm } from './request.js';
+
 let dashboard;
 let dashboardNav;
 let landingNavbar;
@@ -52,35 +54,8 @@ export function initDashboard() {
     event.preventDefault();
     showLandingPage();
   });
-  
-  // Temporary request form navigation
-  const needHelpButton = document.querySelector('#need-help-btn');
-  const dashboardPlaceholder = document.querySelector('#dashboard-placeholder');
-  const requestFormContainer = document.querySelector('#request-form-container');
-  const cancelRequestButton = document.querySelector('#cancel-request-btn');
-  const temporaryRequestForm = document.querySelector('#temporary-request-form');
-  const requestMessage = document.querySelector('#temporary-request-message');
 
-  needHelpButton.addEventListener('click', () => {
-    dashboardPlaceholder.hidden = true;
-    requestFormContainer.hidden = false;
-    requestMessage.textContent = '';
-  });
-
-  cancelRequestButton.addEventListener('click', () => {
-    requestFormContainer.hidden = true;
-    dashboardPlaceholder.hidden = false;
-    temporaryRequestForm.reset();
-    requestMessage.textContent = '';
-  });
-
-  temporaryRequestForm.addEventListener('submit', (event) => {
-    event.preventDefault();
-
-    requestMessage.textContent =
-      'Test form works! Mira can now develop the actual request form and Firebase submission.';
-  });
-
+  initRequestForm();
 }
 
 export function showDashboard(role, profile = {}) {
@@ -131,10 +106,6 @@ export function showLandingPage() {
   landingMain.hidden = false;
   landingFooter.hidden = false;
 }
-
-// import {
-//   renderResidentDashboard
-// } from '../components/residentDashboard.js';
 
 // import {
 //   renderCommunityDashboard
