@@ -2,6 +2,7 @@
 export function dashboardLayout() {
   return `
     <section id="dashboard" hidden>
+      <!-- Shared navbar for both roles -->
       <header class="navbar">
         <a class="brand" href="#" id="dashboard-brand">
           <span>Jiran<span class="brand-accent">Bantu</span></span>
@@ -14,72 +15,57 @@ export function dashboardLayout() {
       </header>
 
       <main class="dashboard-main">
-        <p class="section-label" id="dashboard-role">YOUR COMMUNITY</p>
-        <h1 id="dashboard-title">Dashboard</h1>
-        <div class="dashboard-heading">
-        <p id="dashboard-description"></p>
+        <!-- Shared heading -->
+        <p class="section-label" id="dashboard-role">
+          YOUR COMMUNITY
+        </p>
 
-        <button
+        <h1 id="dashboard-title">Dashboard</h1>
+
+        <div class="dashboard-heading">
+          <p id="dashboard-description"></p>
+
+          <button
             type="button"
             class="btn btn-primary"
             id="need-help-btn"
             hidden
-        >
+          >
             + I Need Help
-        </button>
+          </button>
         </div>
 
-        <div id="dashboard-nav" class="dashboard-grid"></div>
+        <!-- Existing resident dashboard ONLY -->
+        <div id="resident-dashboard-content">
+          <div id="dashboard-nav" class="dashboard-grid"></div>
 
-        
-        <section class="dashboard-placeholder" id="dashboard-placeholder">
-        <h2 id="dashboard-panel-title">Welcome!</h2>
-        <p id="dashboard-panel-description">
-            Your dashboard is ready. Detailed pages will be added by the team.
-        </p>
-        </section>
+          <section
+            class="dashboard-placeholder"
+            id="dashboard-placeholder"
+          >
+            <h2 id="dashboard-panel-title">Welcome!</h2>
 
-        <!-- Temporary request form .  SO MIRA START CODING SINI -->
-        <section class="dashboard-placeholder" id="request-form-container" hidden>
-        <h2>Request Help</h2>
-        <p>Tell your neighbours what help you need.</p>
+            <p id="dashboard-panel-description">
+              Your dashboard is ready. Choose a page to get started.
+            </p>
 
-        <form id="temporary-request-form">
-            <label for="request-task">What do you need help with?</label>
-            <input
-            type="text"
-            id="request-task"
-            placeholder="e.g. Buy groceries"
-            required
-            >
+            <div
+              id="dashboard-request-list"
+              class="request-list"
+              hidden
+            ></div>
+          </section>
+        </div>
 
-            <label for="request-date">Date needed</label>
-            <input
-            type="date"
-            id="request-date"
-            required
-            >
-
-            <label for="request-details">Additional details</label>
-            <textarea
-            id="request-details"
-            placeholder="Provide more information (optional)"
-            rows="4"
-            ></textarea>
-
-            <button type="submit" class="btn btn-primary">
-            Submit Request
-            </button>
-
-            <button type="button" class="btn btn-outline" id="cancel-request-btn">
-            Cancel
-            </button>
-        </form>
-
-        <p id="temporary-request-message" role="status"></p>
-        </section>
-
+        <!-- Separate community dashboard design -->
+        <div id="community-dashboard-mount" hidden></div>
       </main>
     </section>
+
+    <div
+      id="request-form-container"
+      class="request-modal-backdrop"
+      hidden
+    ></div>
   `;
 }

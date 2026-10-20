@@ -13,7 +13,7 @@ export function homepage() {
 
           <p class="hero-description">
             Need a helping hand, or have one to offer?
-            Community Aid connects neighbours so we can support
+            JiranBantu connects neighbours so we can support
             one another, right where we live.
           </p>
 
@@ -129,10 +129,10 @@ export function homepage() {
     <footer class="footer">
       <a class="brand" href="#home">
         <span class="brand-icon">✳</span>
-        <span>Community<span class="brand-accent">Aid</span></span>
+        <span>Jiran<span class="brand-accent">Bantu</span></span>
       </a>
       <p>Built on kindness. Powered by community.</p>
-      <span>© ${new Date().getFullYear()} Community Aid</span>
+      <span>© ${new Date().getFullYear()} JiranBantu</span>
     </footer>
   `;
 }
