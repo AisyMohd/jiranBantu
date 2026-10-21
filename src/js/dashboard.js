@@ -1,10 +1,16 @@
 
 import { initRequestForm } from './request.js';
 
+
 import {
   collection,
-  getDocs
+  getDocs,
+  doc,
+  getDoc,
+  runTransaction,
+  serverTimestamp
 } from 'firebase/firestore';
+
 
 import { auth, db } from '../firebase.js';
 
@@ -70,20 +76,385 @@ export function initDashboard() {
     });
 
   // Request-card actions.
-  dashboard.addEventListener('click', event => {
-    const detailsButton = event.target.closest('[data-request-details]');
-    const helpButton = event.target.closest('[data-request-help]');
+  
+  // Request-card actions.
+  
+dashboard.addEventListener('click', async event => {
+  
+  // COMMUNITY DASHBOARD — View Details
+  const communityDetailsButton = event.target.closest('[data-request-id]');
 
-    if (detailsButton?._requestData) {
-      showRequestDetails(detailsButton._requestData);
+  if (communityDetailsButton && currentRole === 'community') {
+    const requestId = communityDetailsButton.dataset.requestId;
+
+    try {
+      const requestSnapshot = await getDoc(doc(db, 'requests', requestId));
+
+      if (!requestSnapshot.exists()) {
+        showAppModal({
+          title: 'Request Not Found',
+          message: 'This request may have been removed.',
+          buttons: [{ label: 'Close' }]
+        });
+        return;
+      }
+
+      const data = requestSnapshot.data();
+      const taskNames = [
+        ...(Array.isArray(data.tasks) ? data.tasks : []),
+        ...(data.otherTask?.trim() ? [data.otherTask.trim()] : [])
+      ];
+
+      const neededDate = data.dateNeeded?.toDate
+        ? data.dateNeeded.toDate()
+        : data.dateNeeded
+          ? new Date(data.dateNeeded)
+          : null;
+
+      showRequestDetails({
+        task: taskNames.join(', ') || 'Help request',
+        area: data.area || 'Not specified',
+        date: neededDate && !Number.isNaN(neededDate.getTime())
+          ? neededDate.toLocaleDateString('en-MY')
+          : 'Date not specified',
+        time: data.timeNeeded || 'Not specified',
+        details: data.details || 'No additional details provided.',
+        status: data.status === 'submitted'
+          ? 'Open'
+          : data.status || 'Open'
+      });
+    } catch (error) {
+      console.error('Failed to load community request details:', error);
+
+      showAppModal({
+        title: 'Unable to Load Details',
+        message: 'Please try again.',
+        buttons: [{ label: 'Close' }]
+      });
     }
 
-    if (helpButton) {
-      alert(
-        'The request is visible, but accepting a request still needs to be connected to your volunteer workflow.'
-      );
+    return;
+  }
+
+  // COMMUNITY DASHBOARD — I Can Help
+  const communityHelpButton = event.target.closest('[data-help-request-id]');
+
+  if (communityHelpButton && currentRole === 'community') {
+    const requestId = communityHelpButton.dataset.helpRequestId;
+    const helperUid = auth.currentUser?.uid;
+
+    if (!helperUid) {
+      showAppModal({
+        title: 'Login Required',
+        message: 'Please log in before accepting a request.',
+        buttons: [{ label: 'Close' }]
+      });
+      return;
     }
+
+    try {
+      const requestSnapshot = await getDoc(doc(db, 'requests', requestId));
+
+      if (!requestSnapshot.exists()) {
+        showAppModal({
+          title: 'Request Not Found',
+          message: 'This request may have been removed.',
+          buttons: [{ label: 'Close' }]
+        });
+        return;
+      }
+
+      const data = requestSnapshot.data();
+
+      if (data.requesterId === helperUid) {
+        showAppModal({
+          title: 'Your Own Request',
+          message: 'You cannot accept your own request.',
+          buttons: [{ label: 'Close' }]
+        });
+        return;
+      }
+
+      if (data.status !== 'submitted' || data.acceptedBy !== null) {
+        showAppModal({
+          title: 'Request Unavailable',
+          message: 'This request has already been taken or is no longer available.',
+          buttons: [{ label: 'Close' }]
+        });
+        return;
+      }
+
+      const taskNames = [
+        ...(Array.isArray(data.tasks) ? data.tasks : []),
+        ...(data.otherTask?.trim() ? [data.otherTask.trim()] : [])
+      ];
+
+      const neededDate = data.dateNeeded?.toDate
+        ? data.dateNeeded.toDate()
+        : data.dateNeeded
+          ? new Date(data.dateNeeded)
+          : null;
+
+      const requestData = {
+        task: taskNames.join(', ') || 'Help request',
+        area: data.area || 'Not specified',
+        date: neededDate && !Number.isNaN(neededDate.getTime())
+          ? neededDate.toLocaleDateString('en-MY')
+          : 'Date not specified',
+        time: data.timeNeeded || 'Not specified',
+        details: data.details || 'No additional details provided.',
+        status: 'Open'
+      };
+
+      showAppModal({
+        title: 'Help Your Neighbour',
+        message: 'Would you like to accept this request? Once confirmed, you will be assigned to help this neighbour.',
+        requestData,
+        buttons: [
+          { label: 'Cancel', style: 'secondary' },
+          {
+            label: 'Yes, I Can Help',
+            style: 'primary',
+            onClick: async ({ close, button }) => {
+              button.disabled = true;
+              button.textContent = 'Accepting...';
+
+              try {
+                const requestRef = doc(db, 'requests', requestId);
+
+                await runTransaction(db, async transaction => {
+                  const snapshot = await transaction.get(requestRef);
+
+                  if (!snapshot.exists()) {
+                    throw new Error('This request no longer exists.');
+                  }
+
+                  const request = snapshot.data();
+
+                  if (
+                    request.requesterId === helperUid ||
+                    request.status !== 'submitted' ||
+                    request.acceptedBy !== null
+                  ) {
+                    throw new Error('This request is no longer available. Please refresh.');
+                  }
+
+                  transaction.update(requestRef, {
+                    status: 'accepted',
+                    acceptedBy: helperUid,
+                    updatedAt: serverTimestamp()
+                  });
+                });
+
+                close();
+
+                let phone = '';
+
+                try {
+                  const contactSnapshot = await getDoc(
+                    doc(db, 'requests', requestId, 'private', 'contact')
+                  );
+
+                  if (contactSnapshot.exists()) {
+                    phone = contactSnapshot.data().requesterPhone || '';
+                  }
+                } catch (contactError) {
+                  console.error('Could not retrieve requester contact:', contactError);
+                }
+
+                showAppModal({
+                  title: 'Thank You for Helping!',
+                  message: phone
+                    ? `You have accepted this request successfully. Contact the requester at ${phone}.`
+                    : 'You accepted the request successfully, but the contact number could not be retrieved.',
+                  buttons: [{
+                    label: 'Done',
+                    style: 'primary',
+                    onClick: ({ close: closeSuccess }) => {
+                      closeSuccess();
+                      void loadCommunityDashboard();
+                    }
+                  }]
+                });
+              } catch (error) {
+                console.error('Failed to accept community request:', error);
+                close();
+
+                showAppModal({
+                  title: 'Unable to Accept Request',
+                  message: error.message || 'Something went wrong. Please try again.',
+                  buttons: [{
+                    label: 'Close',
+                    style: 'secondary',
+                    onClick: ({ close: closeError }) => {
+                      closeError();
+                      void loadCommunityDashboard();
+                    }
+                  }]
+                });
+              }
+            }
+          }
+        ]
+      });
+    } catch (error) {
+      console.error('Failed to prepare community help request:', error);
+
+      showAppModal({
+        title: 'Unable to Accept Request',
+        message: 'Unable to check this request. Please try again.',
+        buttons: [{ label: 'Close' }]
+      });
+    }
+
+    return;
+  }
+
+  const detailsButton = event.target.closest('[data-request-details]');
+  const helpButton = event.target.closest('[data-request-help]');
+
+  if (detailsButton?._requestData) {
+    showRequestDetails(detailsButton._requestData);
+    return;
+  }
+
+  if (!helpButton) return;
+
+  const requestId = helpButton.dataset.requestHelp;
+  const helperUid = auth.currentUser?.uid;
+
+  if (!helperUid) {
+    showAppModal({
+      title: 'Login Required',
+      message: 'Please log in before accepting a request.',
+      buttons: [{ label: 'Close' }]
+    });
+    return;
+  }
+
+  showAppModal({
+    title: 'Help Your Neighbour',
+    message:
+      'Would you like to accept this request? ' +
+      'Once confirmed, you will be assigned to help this neighbour.',
+    requestData: helpButton._requestData,
+    buttons: [
+      {
+        label: 'Cancel',
+        style: 'secondary'
+      },
+      {
+        label: 'Yes, I Can Help',
+        style: 'primary',
+        onClick: async ({ close, button }) => {
+          button.disabled = true;
+          button.textContent = 'Accepting...';
+
+          try {
+            const requestRef = doc(db, 'requests', requestId);
+
+            await runTransaction(db, async transaction => {
+              const snapshot = await transaction.get(requestRef);
+
+              if (!snapshot.exists()) {
+                throw new Error('This request no longer exists.');
+              }
+
+              const request = snapshot.data();
+
+              if (request.requesterId === helperUid) {
+                throw new Error('You cannot accept your own request.');
+              }
+
+              if (
+                request.status !== 'submitted' ||
+                request.acceptedBy !== null
+              ) {
+                throw new Error(
+                  'This request has already been taken. Please refresh.'
+                );
+              }
+
+              transaction.update(requestRef, {
+                status: 'accepted',
+                acceptedBy: helperUid,
+                updatedAt: serverTimestamp()
+              });
+            });
+
+            close();
+
+            // Only the accepted helper can read this private contact.
+            const contactRef = doc(
+              db,
+              'requests',
+              requestId,
+              'private',
+              'contact'
+            );
+
+            let phone = '';
+
+            try {
+              const contactSnapshot = await getDoc(contactRef);
+
+              if (contactSnapshot.exists()) {
+                phone = contactSnapshot.data().requesterPhone || '';
+              }
+            } catch (contactError) {
+              console.error(
+                'Could not retrieve requester contact:',
+                contactError
+              );
+            }
+
+            showAppModal({
+              title: 'Thank You for Helping!',
+              message: phone
+                ? `You have accepted this request successfully. Contact the requester at ${phone}.`
+                : 'You accepted the request successfully, but the contact number could not be retrieved.',
+              buttons: [
+                {
+                  label: 'Done',
+                  style: 'primary',
+                  onClick: ({ close: closeSuccess }) => {
+                    closeSuccess();
+                    openResidentPage(currentPageId);
+                  }
+                }
+              ]
+            });
+
+          } catch (error) {
+            console.error('Failed to accept request:', error);
+
+            close();
+
+            showAppModal({
+              title: 'Unable to Accept Request',
+              message:
+                error.message ||
+                'Something went wrong. Please try again.',
+              buttons: [
+                {
+                  label: 'Close',
+                  style: 'secondary',
+                  onClick: ({ close: closeError }) => {
+                    closeError();
+                    openResidentPage(currentPageId);
+                  }
+                }
+              ]
+            });
+          }
+        }
+      }
+    ]
   });
+});
+
+  
+
 }
 
 export function showDashboard(role, profile = {}) {
@@ -258,6 +629,7 @@ async function loadResidentRequests(container, pageId) {
   }
 }
 
+
 function createRequestCard(request, pageId) {
   const card = document.createElement('article');
   card.className = 'jb-request-card';
@@ -271,14 +643,31 @@ function createRequestCard(request, pageId) {
     ? taskNames.join(', ')
     : 'Help request';
 
-  const rawStatus = String(request.status || 'submitted').toLowerCase();
+  const rawStatus = String(
+    request.status || 'submitted'
+  ).toLowerCase();
+
   const status = rawStatus === 'submitted' ? 'Open' : rawStatus;
-  const statusClass = status.toLowerCase().replace(/[^a-z-]/g, '');
+
+  const statusClass = status
+    .toLowerCase()
+    .replace(/[^a-z-]/g, '');
 
   const date = request.dateNeeded?.toDate?.();
+
   const dateLabel = date
     ? date.toLocaleDateString('en-MY')
     : 'Date not specified';
+
+  const requestData = {
+    ...request,
+    task,
+    area: request.area || 'Neighbourhood not specified',
+    date: dateLabel,
+    time: request.timeNeeded || 'Time not specified',
+    details: request.details || 'No additional details provided.',
+    status
+  };
 
   const heading = document.createElement('div');
   heading.className = 'jb-request-card-heading';
@@ -295,13 +684,12 @@ function createRequestCard(request, pageId) {
   const meta = document.createElement('p');
   meta.className = 'jb-request-meta';
   meta.textContent =
-    `${request.area || 'Neighbourhood not specified'} · ${dateLabel}` +
-    `${request.timeNeeded ? ` at ${request.timeNeeded}` : ''}`;
+    `${requestData.area} · ${dateLabel}` +
+    (request.timeNeeded ? ` at ${request.timeNeeded}` : '');
 
-  const details = document.createElement('p');
-  details.className = 'jb-request-description';
-  details.textContent =
-    request.details || 'No additional details provided.';
+  const description = document.createElement('p');
+  description.className = 'jb-request-description';
+  description.textContent = requestData.details;
 
   const actions = document.createElement('div');
   actions.className = 'jb-request-actions';
@@ -310,44 +698,46 @@ function createRequestCard(request, pageId) {
   detailsButton.type = 'button';
   detailsButton.className = 'jb-secondary-btn';
   detailsButton.dataset.requestDetails = request.id;
-  detailsButton.textContent = 'View details';
-
-  detailsButton._requestData = {
-    ...request,
-    task,
-    displayStatus: status,
-    dateLabel
-  };
+  detailsButton.textContent = 'View Details';
+  detailsButton._requestData = requestData;
 
   actions.append(detailsButton);
 
   if (
     pageId !== 'my-requests' &&
-    ['submitted', 'open', 'unclaimed'].includes(rawStatus)
+    rawStatus === 'submitted'
   ) {
     const helpButton = document.createElement('button');
     helpButton.type = 'button';
     helpButton.className = 'jb-primary-btn';
     helpButton.dataset.requestHelp = request.id;
     helpButton.textContent = 'I Can Help';
+    helpButton._requestData = requestData;
 
     actions.append(helpButton);
   }
 
-  card.append(heading, meta, details, actions);
+  card.append(heading, meta, description, actions);
+
   return card;
 }
 
+
+
 function showRequestDetails(request) {
-  alert(
-    `${request.task}\n\n` +
-    `Neighbourhood: ${request.area || 'Not specified'}\n` +
-    `Date: ${request.dateLabel}\n` +
-    `Time: ${request.timeNeeded || 'Not specified'}\n\n` +
-    `${request.details || 'No additional details provided.'}\n\n` +
-    `Status: ${request.displayStatus}`
-  );
+  showAppModal({
+    title: 'Request Details',
+    message: 'Here is what your neighbour needs help with.',
+    requestData: request,
+    buttons: [
+      {
+        label: 'Close',
+        style: 'secondary'
+      }
+    ]
+  });
 }
+
 
 function openCommunityPage(pageId) {
   currentPageId = pageId;
@@ -375,3 +765,122 @@ export function showLandingPage() {
   if (landingMain) landingMain.hidden = false;
   if (landingFooter) landingFooter.hidden = false;
 }
+
+function showAppModal({
+  title,
+  message = '',
+  requestData = null,
+  buttons = []
+}) {
+  // Remove an existing request modal, if present.
+  document.querySelector('.jb-modal-overlay')?.remove();
+
+  const overlay = document.createElement('div');
+  overlay.className = 'jb-modal-overlay';
+
+  const modal = document.createElement('section');
+  modal.className = 'jb-modal';
+  modal.setAttribute('role', 'dialog');
+  modal.setAttribute('aria-modal', 'true');
+  modal.setAttribute('aria-label', title);
+
+  const header = document.createElement('div');
+  header.className = 'jb-modal-header';
+
+  const heading = document.createElement('h2');
+  heading.className = 'jb-modal-title';
+  heading.textContent = title;
+
+  const closeButton = document.createElement('button');
+  closeButton.className = 'jb-modal-close';
+  closeButton.type = 'button';
+  closeButton.textContent = '×';
+  closeButton.setAttribute('aria-label', 'Close');
+
+  header.append(heading, closeButton);
+  modal.append(header);
+
+  if (message) {
+    const paragraph = document.createElement('p');
+    paragraph.className = 'jb-modal-message';
+    paragraph.textContent = message;
+    modal.append(paragraph);
+  }
+
+  if (requestData) {
+    const details = document.createElement('div');
+    details.className = 'jb-modal-details';
+
+    const fields = [
+      ['Help needed', requestData.task],
+      ['Area', requestData.area],
+      ['Date needed', requestData.date],
+      ['Time', requestData.time],
+      ['Additional details', requestData.details],
+      ['Status', requestData.status]
+    ];
+
+    fields.forEach(([label, value]) => {
+      if (!value) return;
+
+      const item = document.createElement('div');
+      item.className = 'jb-modal-detail';
+
+      const fieldLabel = document.createElement('span');
+      fieldLabel.className = 'jb-modal-detail-label';
+      fieldLabel.textContent = label;
+
+      const fieldValue = document.createElement('div');
+      fieldValue.className = 'jb-modal-detail-value';
+      fieldValue.textContent = value;
+
+      item.append(fieldLabel, fieldValue);
+      details.append(item);
+    });
+
+    modal.append(details);
+  }
+
+  const actions = document.createElement('div');
+  actions.className = 'jb-modal-actions';
+
+  function closeModal() {
+    overlay.remove();
+  }
+
+  closeButton.addEventListener('click', closeModal);
+
+  overlay.addEventListener('click', event => {
+    if (event.target === overlay) closeModal();
+  });
+
+  buttons.forEach(({ label, style = 'secondary', onClick }) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className =
+      `jb-modal-btn jb-modal-btn-${style}`;
+    button.textContent = label;
+
+    button.addEventListener('click', async () => {
+      if (onClick) {
+        await onClick({
+          close: closeModal,
+          button
+        });
+      } else {
+        closeModal();
+      }
+    });
+
+    actions.append(button);
+  });
+
+  modal.append(actions);
+  overlay.append(modal);
+  document.body.append(overlay);
+
+  closeButton.focus();
+
+  return { close: closeModal };
+}
+

@@ -1,11 +1,11 @@
-
 import {
   collection,
-  addDoc,
   serverTimestamp,
   Timestamp,
   doc,
-  getDoc
+  getDoc,
+  setDoc,
+  writeBatch
 } from "firebase/firestore";
 
 import { auth, db } from "../firebase.js";
@@ -25,14 +25,23 @@ export const createRequest = async (formData, currentUser) => {
     );
   }
 
+  
   const residentData = residentSnap.data();
   const requesterName = residentData.fullName;
+  const requesterPhone = residentData.phone;
 
   if (typeof requesterName !== "string" || !requesterName.trim()) {
     throw new Error(
       "Your name is missing from your resident profile."
     );
   }
+
+  if (typeof requesterPhone !== "string" || !requesterPhone.trim()) {
+    throw new Error(
+      "Your phone number is missing from your resident profile."
+    );
+  }
+
 
   // Validate task selection
   const hasTask =
@@ -93,12 +102,33 @@ export const createRequest = async (formData, currentUser) => {
     needsAttention: false
   };
 
-  const docRef = await addDoc(
-    collection(db, "requests"),
-    requestData
+  
+  
+  const requestRef = doc(collection(db, "requests"));
+
+  const contactRef = doc(
+    db,
+    "requests",
+    requestRef.id,
+    "private",
+    "contact"
   );
 
-  return docRef.id;
+  const batch = writeBatch(db);
+
+  batch.set(requestRef, requestData);
+
+  batch.set(contactRef, {
+    requesterId: currentUser.uid,
+    requesterPhone: requesterPhone,
+    createdAt: serverTimestamp()
+  });
+
+  await batch.commit();
+
+  return requestRef.id;
+
+
 };
 
 
