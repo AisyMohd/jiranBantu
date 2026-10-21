@@ -69,6 +69,23 @@ export function renderCommunityDashboard() {
               <p>Loading requests...</p>
             </div>
           </section>
+          
+          <!-- My Accepted Requests -->
+          <section class="community-requests" id="community-accepted-section">
+            <div class="community-section-heading">
+              <div>
+                <h2>My Accepted Requests</h2>
+                <p>
+                  View the requests you have accepted and contact the residents you are helping.
+                </p>
+              </div>
+            </div>
+
+            <div id="community-accepted-list" aria-live="polite">
+              <p>Loading your accepted requests...</p>
+            </div>
+          </section>
+
 
         </main>
 

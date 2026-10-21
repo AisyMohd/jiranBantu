@@ -1,7 +1,5 @@
 
 import '../communityDashboard.css';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../firebase.js';
 
 import {
   renderCommunityDashboard,
@@ -12,6 +10,14 @@ export {
   renderCommunityDashboard,
   renderCommunityRequestCard
 };
+import {
+  collection,
+  getDocs,
+  doc,
+  getDoc
+} from 'firebase/firestore';
+
+import { auth, db } from '../firebase.js';
 
 // Time thresholds
 const TWO_HOURS = 2 * 60 * 60 * 1000;
@@ -131,11 +137,15 @@ export function getAttentionReason(request, now = new Date()) {
 export async function loadCommunityDashboard() {
   const requestList = document.querySelector('#community-request-list');
   const attentionList = document.querySelector('#community-attention-list');
+  const acceptedList = document.querySelector('#community-accepted-list');
 
   if (!requestList || !attentionList) return;
 
   requestList.innerHTML = '<p>Loading requests...</p>';
   attentionList.innerHTML = '<p>Loading requests...</p>';
+  if (acceptedList) {
+  acceptedList.innerHTML = '<p>Loading your accepted requests...</p>';
+}
 
   try {
     const snapshot = await getDocs(collection(db, 'requests'));
@@ -182,6 +192,74 @@ export async function loadCommunityDashboard() {
 
     const preparedRequests = prepareCommunityRequests(requests);
     const attentionRequests = getAttentionRequests(preparedRequests);
+    
+    // Load requests accepted by the currently logged-in community member.
+    if (acceptedList) {
+      const helperUid = auth.currentUser?.uid;
+
+      if (!helperUid) {
+        acceptedList.innerHTML =
+          '<p>Please log in to view your accepted requests.</p>';
+      } else {
+        const myAcceptedRequests = requests.filter(
+          request => request.acceptedBy === helperUid
+        );
+
+        const acceptedWithContacts = await Promise.all(
+          myAcceptedRequests.map(async request => {
+            let requesterPhone = '';
+
+            try {
+              const contactSnapshot = await getDoc(
+                doc(db, 'requests', request.id, 'private', 'contact')
+              );
+
+              if (contactSnapshot.exists()) {
+                requesterPhone =
+                  contactSnapshot.data().requesterPhone || '';
+              }
+            } catch (error) {
+              console.error(
+                `Could not retrieve contact for ${request.id}:`,
+                error
+              );
+            }
+
+            return { ...request, requesterPhone };
+          })
+        );
+
+        const escapeHTML = value =>
+          String(value ?? '').replace(/[&<>"']/g, char => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+          })[char]);
+
+        acceptedList.innerHTML = acceptedWithContacts.length
+          ? acceptedWithContacts.map(request => {
+              const card = renderCommunityRequestCard(request);
+              const contactDetails = `
+                <div class="jb-accepted-contact">
+                  <p><strong>Requester:</strong> ${escapeHTML(
+                    request.requesterName || 'Resident'
+                  )}</p>
+                  <p><strong>Phone:</strong> ${
+                    request.requesterPhone
+                      ? `<a href="tel:${escapeHTML(request.requesterPhone)}">${escapeHTML(request.requesterPhone)}</a>`
+                      : 'Contact unavailable'
+                  }</p>
+                </div>
+              `;
+
+              return card.replace('</article>', `${contactDetails}</article>`);
+            }).join('')
+          : '<p>You have not accepted any requests yet.</p>';
+      }
+    }
+
 
     // Update the four statistic cards.
     const counts = {

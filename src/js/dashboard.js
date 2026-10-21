@@ -42,7 +42,11 @@ const residentPages = {
   'my-requests': {
     title: 'My Requests',
     description: 'Track the help you have requested.'
-  }
+  },
+  'accepted-requests': {
+  title: 'My Accepted Requests',
+  description: 'View requests you have accepted and contact the neighbours you are helping.'
+}
 };
 
 export function initDashboard() {
@@ -262,20 +266,30 @@ dashboard.addEventListener('click', async event => {
                   console.error('Could not retrieve requester contact:', contactError);
                 }
 
-                showAppModal({
-                  title: 'Thank You for Helping!',
-                  message: phone
-                    ? `You have accepted this request successfully. Contact the requester at ${phone}.`
-                    : 'You accepted the request successfully, but the contact number could not be retrieved.',
-                  buttons: [{
+                
+                
+                
+              showAppModal({
+                title: 'Thank You for Helping!',
+                message: 'Your offer to help has been accepted successfully. Please check My Accepted Requests to view the request details and contact information.',
+                buttons: [
+                  {
                     label: 'Done',
                     style: 'primary',
-                    onClick: ({ close: closeSuccess }) => {
-                      closeSuccess();
-                      void loadCommunityDashboard();
+                    onClick: ({ close }) => {
+                      close();
+
+                      if (currentRole === 'community') {
+                        void loadCommunityDashboard();
+                      } else {
+                        openResidentPage(currentPageId);
+                      }
                     }
-                  }]
-                });
+                  }
+                ]
+              });
+
+
               } catch (error) {
                 console.error('Failed to accept community request:', error);
                 close();
@@ -407,23 +421,29 @@ dashboard.addEventListener('click', async event => {
                 contactError
               );
             }
-
+            
             showAppModal({
               title: 'Thank You for Helping!',
-              message: phone
-                ? `You have accepted this request successfully. Contact the requester at ${phone}.`
-                : 'You accepted the request successfully, but the contact number could not be retrieved.',
+              message: 'Your offer to help has been accepted successfully. Please check My Accepted Requests to view the request details and contact information.',
               buttons: [
                 {
                   label: 'Done',
                   style: 'primary',
-                  onClick: ({ close: closeSuccess }) => {
-                    closeSuccess();
-                    openResidentPage(currentPageId);
+                  onClick: ({ close }) => {
+                    close();
+
+                    if (currentRole === 'community') {
+                      void loadCommunityDashboard();
+                    } else {
+                      openResidentPage(currentPageId);
+                    }
                   }
                 }
               ]
             });
+
+
+
 
           } catch (error) {
             console.error('Failed to accept request:', error);
@@ -589,14 +609,21 @@ async function loadResidentRequests(container, pageId) {
       ...documentSnapshot.data()
     }));
 
+    
     if (pageId === 'my-requests') {
       requests = requests.filter(
         request => request.requesterId === userId
       );
+    } else if (pageId === 'accepted-requests') {
+      requests = requests.filter(
+        request => request.acceptedBy === userId
+      );
     } else {
       // Overview and Browse show requests available to neighbours.
       requests = requests.filter(request => {
-        const status = String(request.status || 'submitted').toLowerCase();
+        const status = String(
+          request.status || 'submitted'
+        ).toLowerCase();
 
         return ['submitted', 'open', 'unclaimed'].includes(status);
       });
@@ -607,22 +634,64 @@ async function loadResidentRequests(container, pageId) {
       );
     }
 
+
     requests.sort((a, b) => {
       const aTime = a.createdAt?.toMillis?.() || 0;
       const bTime = b.createdAt?.toMillis?.() || 0;
       return bTime - aTime;
     });
 
+    
     if (!requests.length) {
-      container.textContent = pageId === 'my-requests'
-        ? 'You have not submitted any requests yet.'
-        : 'There are no available neighbour requests right now.';
+      if (pageId === 'my-requests') {
+        container.textContent = 'You have not submitted any requests yet.';
+      } else if (pageId === 'accepted-requests') {
+        container.textContent = 'You have not accepted any requests yet.';
+      } else {
+        container.textContent = 'There are no available neighbour requests right now.';
+      }
+
       return;
     }
 
-    container.replaceChildren(
-      ...requests.map(request => createRequestCard(request, pageId))
-    );
+
+    
+    if (pageId === 'accepted-requests') {
+      const requestsWithContacts = await Promise.all(
+        requests.map(async request => {
+          let requesterPhone = '';
+
+          try {
+            const contactSnapshot = await getDoc(
+              doc(db, 'requests', request.id, 'private', 'contact')
+            );
+
+            if (contactSnapshot.exists()) {
+              requesterPhone =
+                contactSnapshot.data().requesterPhone || '';
+            }
+          } catch (error) {
+            console.error(
+              `Unable to retrieve contact for request ${request.id}:`,
+              error
+            );
+          }
+
+          return { ...request, requesterPhone };
+        })
+      );
+
+      container.replaceChildren(
+        ...requestsWithContacts.map(request =>
+          createRequestCard(request, pageId)
+        )
+      );
+    } else {
+      container.replaceChildren(
+        ...requests.map(request => createRequestCard(request, pageId))
+      );
+    }
+
   } catch (error) {
     console.error('Failed to load Resident requests:', error);
     container.textContent = 'Unable to load requests. Please try again.';
@@ -702,6 +771,23 @@ function createRequestCard(request, pageId) {
   detailsButton._requestData = requestData;
 
   actions.append(detailsButton);
+  
+  if (pageId === 'accepted-requests') {
+    const contact = document.createElement('div');
+    contact.className = 'jb-accepted-contact';
+
+    const requesterName = document.createElement('p');
+    requesterName.textContent =
+      `Requester: ${request.requesterName || 'Resident'}`;
+
+    const requesterPhone = document.createElement('p');
+    requesterPhone.textContent =
+      `Phone: ${request.requesterPhone || 'Contact unavailable'}`;
+
+    contact.append(requesterName, requesterPhone);
+    card.append(contact);
+  }
+
 
   if (
     pageId !== 'my-requests' &&
@@ -770,6 +856,7 @@ function showAppModal({
   title,
   message = '',
   requestData = null,
+  contactData = null,
   buttons = []
 }) {
   // Remove an existing request modal, if present.
@@ -840,6 +927,47 @@ function showAppModal({
 
     modal.append(details);
   }
+  
+  
+  if (contactData?.requesterName || contactData?.requesterPhone) {
+    const contactCard = document.createElement('div');
+    contactCard.className = 'jb-modal-contact';
+
+    const contactHeading = document.createElement('h3');
+    contactHeading.textContent = 'Requester Contact';
+
+    const nameRow = document.createElement('p');
+    nameRow.className = 'jb-modal-contact-row';
+
+    const nameLabel = document.createElement('span');
+    nameLabel.textContent = 'Name';
+
+    const nameValue = document.createElement('strong');
+    nameValue.textContent = contactData.requesterName || 'Resident';
+
+    nameRow.append(nameLabel, nameValue);
+
+    const phoneRow = document.createElement('p');
+    phoneRow.className = 'jb-modal-contact-row';
+
+    const phoneLabel = document.createElement('span');
+    phoneLabel.textContent = 'Phone';
+
+    if (contactData.requesterPhone) {
+      const phoneLink = document.createElement('a');
+      phoneLink.href = `tel:${contactData.requesterPhone}`;
+      phoneLink.textContent = contactData.requesterPhone;
+      phoneRow.append(phoneLabel, phoneLink);
+    } else {
+      const phoneValue = document.createElement('strong');
+      phoneValue.textContent = 'Contact unavailable';
+      phoneRow.append(phoneLabel, phoneValue);
+    }
+
+    contactCard.append(contactHeading, nameRow, phoneRow);
+    modal.append(contactCard);
+  }
+
 
   const actions = document.createElement('div');
   actions.className = 'jb-modal-actions';
