@@ -1,29 +1,5 @@
 export function residentDashboard() {
   return `
-    <section id="dashboard" class="jb-dashboard" hidden>
-
-      <!-- Top Header -->
-      <header class="jb-header">
-        <a class="jb-brand" href="#" id="dashboard-brand">
-          <span class="jb-logo">♡</span>
-          <span class="jb-brand-text">
-            <strong>JiranBantu</strong>
-            <small>Jiran Bantu Jiran</small>
-          </span>
-        </a>
-
-        <div class="jb-header-actions">
-          <span id="dashboard-user" class="jb-user-name"></span>
-
-          <button type="button" class="jb-header-btn" id="switch-role-btn">
-            Switch role
-          </button>
-
-          <button type="button" class="jb-header-btn" id="logout-btn">
-            Logout
-          </button>
-        </div>
-      </header>
 
       <div class="jb-layout">
 
@@ -94,99 +70,6 @@ export function residentDashboard() {
           <div id="request-list" class="jb-request-list"></div>
         </section>
 
-        <!-- Existing request form placeholder -->
-        <section
-          class="jb-summary-card jb-request-form"
-          id="request-form-container"
-          hidden
-        >
-          <h2>Request Help</h2>
-          <p>Tell your neighbours what help you need.</p>
-
-          <form id="temporary-request-form">
-            <label for="request-task">What do you need help with?</label>
-            <input
-              type="text"
-              id="request-task"
-              placeholder="e.g. Buy groceries"
-              required
-            >
-
-            <label for="request-date">Date needed</label>
-            <input type="date" id="request-date" required>
-
-            <label for="request-details">Additional details</label>
-            <textarea
-              id="request-details"
-              placeholder="Provide more information (optional)"
-              rows="4"
-            ></textarea>
-
-            <div class="jb-form-actions">
-              <button type="submit" class="jb-primary-btn">
-                Submit Request
-              </button>
-
-              <button
-                type="button"
-                class="jb-secondary-btn"
-                id="cancel-request-btn"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-
-          <p id="temporary-request-message" role="status"></p>
-        </section>
-
-
-          <!-- Existing request form -->
-          <section
-            class="jb-summary-card jb-request-form"
-            id="request-form-container"
-            hidden
-          >
-            <h2>Request Help</h2>
-            <p>Tell your neighbours what help you need.</p>
-
-            <form id="temporary-request-form">
-              <label for="request-task">What do you need help with?</label>
-              <input
-                type="text"
-                id="request-task"
-                placeholder="e.g. Buy groceries"
-                required
-              >
-
-              <label for="request-date">Date needed</label>
-              <input type="date" id="request-date" required>
-
-              <label for="request-details">Additional details</label>
-              <textarea
-                id="request-details"
-                placeholder="Provide more information (optional)"
-                rows="4"
-              ></textarea>
-
-              <div class="jb-form-actions">
-                <button type="submit" class="jb-primary-btn">
-                  Submit Request
-                </button>
-
-                <button
-                  type="button"
-                  class="jb-secondary-btn"
-                  id="cancel-request-btn"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-
-            <p id="temporary-request-message" role="status"></p>
-          </section>
-
           <!-- Existing button retained for dashboard.js -->
           <button
             type="button"
@@ -199,20 +82,5 @@ export function residentDashboard() {
 
         </main>
       </div>
-
-      <!-- Bottom Navigation -->
-      <nav class="jb-bottom-nav">
-        <button class="jb-bottom-link active" data-page="overview">
-          ⌂ Home
-        </button>
-        <button class="jb-bottom-link" data-page="my-requests">
-          ☷ My Requests
-        </button>
-        <button class="jb-bottom-link" data-page="browse">
-          ♡ Help Neighbours
-        </button>
-      </nav>
-
-    </section>
   `;
 }

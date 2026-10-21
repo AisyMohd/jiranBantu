@@ -1543,12 +1543,7 @@ h3 {
 }
 
 #dashboard.jb-dashboard .jb-sidebar .jb-sidebar-role,
-#dashboard.jb-dashboard .jb-sidebar .jb-eyebrow {
-  width: 100%;
-  box-sizing: border-box;
-  text-align: center !important;
-  font-weight: 700;
-}
+
 
 #dashboard.jb-dashboard .jb-sidebar-nav {
   display: flex;
@@ -1610,7 +1605,7 @@ h3 {
   font-weight: 500;
   letter-spacing: 0;
 }
-#dashboard.jb-eyebrow {
+#dashboard.jb-dashboard .jb-eyebrow {
   margin: 0 0 8px;
   padding: 0 9px;
   color: var(--jb-green);

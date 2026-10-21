@@ -1,71 +1,92 @@
-
 export function dashboardLayout() {
   return `
-    <section id="dashboard" hidden>
-      <!-- Shared navbar for both roles -->
-      <header class="navbar">
-        <a class="brand" href="#" id="dashboard-brand">
-          <span>Jiran<span class="brand-accent">Bantu</span></span>
+    <section id="dashboard" class="jb-dashboard" hidden>
+
+      <!-- Shared header for Resident and Community -->
+      <header class="jb-header">
+        <a class="jb-brand" href="#" id="dashboard-brand">
+          <span class="jb-logo">♡</span>
+          <span class="jb-brand-text">
+            <strong>JiranBantu</strong>
+            <small>Jiran Bantu Jiran</small>
+          </span>
         </a>
 
-        <div class="nav-actions">
-          <span id="dashboard-user"></span>
-          <button class="btn btn-outline" id="logout-btn">Logout</button>
+        <div class="jb-header-actions">
+          <span id="dashboard-user" class="jb-user-name"></span>
+          <button type="button" class="jb-header-btn" id="logout-btn">
+            Logout
+          </button>
         </div>
       </header>
 
-      <main class="dashboard-main">
-        <!-- Shared heading -->
-        <p class="section-label" id="dashboard-role">
-          YOUR COMMUNITY
-        </p>
+      <!-- Dashboard content rendered according to the user's role -->
+      <div id="dashboard-content">
+          <div id="resident-dashboard-mount" hidden></div>
+          <div id="community-dashboard-mount" hidden></div>
+          <div id="request-form-container" class="request-modal-backdrop"hidden></div>
+      </div>
 
-        <h1 id="dashboard-title">Dashboard</h1>
+      
 
-        <div class="dashboard-heading">
-          <p id="dashboard-description"></p>
+      <!-- Shared bottom navigation -->
+      <nav class="jb-bottom-nav" aria-label="Dashboard navigation">
 
-          <button
-            type="button"
-            class="btn btn-primary"
-            id="need-help-btn"
-            hidden
-          >
-            + I Need Help
-          </button>
-        </div>
+        <!-- Resident navigation -->
+        <button type="button"
+          class="jb-bottom-link active"
+          data-page="overview"
+          data-resident-only>
+          ⌂ Home
+        </button>
 
-        <!-- Existing resident dashboard ONLY -->
-        <div id="resident-dashboard-content">
-          <div id="dashboard-nav" class="dashboard-grid"></div>
+        <button type="button"
+          class="jb-bottom-link"
+          data-page="my-requests"
+          data-resident-only>
+          ☷ My Requests
+        </button>
 
-          <section
-            class="dashboard-placeholder"
-            id="dashboard-placeholder"
-          >
-            <h2 id="dashboard-panel-title">Welcome!</h2>
+        <button type="button"
+          class="jb-bottom-link"
+          data-page="browse"
+          data-resident-only>
+          ♡ Help Neighbours
+        </button>
 
-            <p id="dashboard-panel-description">
-              Your dashboard is ready. Choose a page to get started.
-            </p>
+        <!-- Community navigation -->
+        <button type="button"
+          class="jb-bottom-link"
+          data-page="overview"
+          data-community-only
+          hidden>
+          ⌂ Home
+        </button>
 
-            <div
-              id="dashboard-request-list"
-              class="request-list"
-              hidden
-            ></div>
-          </section>
-        </div>
+        <button type="button"
+          class="jb-bottom-link"
+          data-page="requests"
+          data-community-only
+          hidden>
+          ☷ All Requests
+        </button>
 
-        <!-- Separate community dashboard design -->
-        <div id="community-dashboard-mount" hidden></div>
-      </main>
+        <button type="button"
+          class="jb-bottom-link"
+          data-page="escalations"
+          data-community-only
+          hidden>
+          ! Needs Attention
+        </button>
+
+      </nav>
+
     </section>
 
-    <div
-      id="request-form-container"
+    <!-- Keep the existing working request form container -->
+    <div id="request-form-container"
       class="request-modal-backdrop"
-      hidden
-    ></div>
+      hidden>
+    </div>
   `;
 }
