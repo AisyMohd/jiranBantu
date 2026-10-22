@@ -300,11 +300,14 @@ if (needHelpButton) {
   document.querySelector('#dashboard-role').textContent =
     isCommunity ? 'COMMUNITY MANAGEMENT' : 'YOUR NEIGHBOURHOOD';
 
-  const userName = profile.fullName || 'Resident';
+  const userName = profile.fullName?.trim() || 'Resident';
 
-  document.querySelector('#dashboard-title').textContent =
-  `Welcome, ${userName}`;
+  const welcomeTitle = document.querySelector('#dashboard-title');
 
+  if (welcomeTitle) {
+    welcomeTitle.textContent = `Welcome, ${userName}!`;
+  }
+  
   document.querySelector('#dashboard-description').textContent =
     isCommunity
       ? 'Coordinate support and monitor requests across your community.'
