@@ -1,24 +1,23 @@
 export function dashboardLayout() {
   return `
     <section id="dashboard" class="jb-dashboard" hidden>
-
+      
       <!-- Shared header for Resident and Community -->
-      <header class="jb-header">
-        <a class="jb-brand" href="#" id="dashboard-brand">
-          <span class="jb-logo">♡</span>
-          <span class="jb-brand-text">
-            <strong>JiranBantu</strong>
-            <small>Jiran Bantu Jiran</small>
-          </span>
+      
+      <header class="navbar dashboard-navbar">
+        <a class="brand" href="#" id="dashboard-brand" aria-label="JiranBantu home">
+          <span class="brand-icon">✳</span>
+          <span>Jiran<span class="brand-accent">Bantu</span></span>
         </a>
 
-        <div class="jb-header-actions">
+        <div class="nav-actions dashboard-nav-actions">
           <span id="dashboard-user" class="jb-user-name"></span>
-          <button type="button" class="jb-header-btn" id="logout-btn">
+          <button type="button" class="btn btn-outline" id="logout-btn">
             Logout
           </button>
         </div>
       </header>
+
 
       <!-- Dashboard content rendered according to the user's role -->
       <div id="dashboard-content">
@@ -42,6 +41,13 @@ export function dashboardLayout() {
 
         <button type="button"
           class="jb-bottom-link"
+          data-page="browse"
+          data-resident-only>
+          ♡ Help Neighbours
+        </button>
+
+        <button type="button"
+          class="jb-bottom-link"
           data-page="my-requests"
           data-resident-only>
           ☷ My Requests
@@ -49,9 +55,9 @@ export function dashboardLayout() {
 
         <button type="button"
           class="jb-bottom-link"
-          data-page="browse"
+          data-page="accepted-requests"
           data-resident-only>
-          ♡ Help Neighbours
+          ☆ My Accepted Requests
         </button>
 
         <!-- Community navigation -->

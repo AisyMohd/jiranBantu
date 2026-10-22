@@ -6,7 +6,6 @@ export function residentDashboard() {
         <!-- Left Sidebar -->
         <aside class="jb-sidebar">
           <p class="jb-sidebar-role" id="dashboard-role">
-            RESIDENT · FASA 6
           </p>
           <p class="jb-eyebrow">RESIDENT · FASA 6</p>
           <nav class="jb-sidebar-nav" id="dashboard-sidebar-nav">
@@ -14,15 +13,16 @@ export function residentDashboard() {
               ⌂ Home
             </button>
 
+            <button class="jb-side-link" data-page="browse">
+              ♡ Help Neighbours
+            </button>
+
             <button class="jb-side-link" data-page="my-requests">
               ☷ My Requests
             </button>
 
-            <button class="jb-side-link" data-page="browse">
-              ♡ Help Neighbours
-            </button>
             <button class="jb-side-link" data-page="accepted-requests">
-              ♡ My Accepted Requests
+              ☆ My Accepted Requests
             </button>
 
           </nav>
@@ -31,7 +31,7 @@ export function residentDashboard() {
             <strong>Try the demo</strong>
             <p>
               Request help, find it in My Requests, then explore
-              available requests and accept one.
+              any available requests and accept one.
             </p>
           </div>
         </aside>
