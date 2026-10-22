@@ -2,7 +2,28 @@
 export function renderCommunityDashboard() {
   return `
     <div class="community-dashboard">
-      <header class="community-header">
+    
+<!-- Community Quick Navigation -->
+<nav class="community-side-nav" aria-label="Community dashboard navigation">
+  <p class="community-side-nav-title">QUICK NAVIGATION</p>
+
+  <a href="#community-overview" class="community-side-link">
+    <span aria-hidden="true">⌂</span>
+    Overview
+  </a>
+
+  <a href="#community-all-requests" class="community-side-link">
+    <span aria-hidden="true">☷</span>
+    All Requests
+  </a>
+
+  <a href="#community-accepted-section" class="community-side-link">
+    <span aria-hidden="true">✓</span>
+    My Accepted Requests
+  </a>
+</nav>
+
+      <header class="community-header" id="community-overview">
         <p class="community-eyebrow">COMMUNITY MANAGEMENT</p>
         <h2>Neighbourhood Overview</h2>
         <p>Keep an eye on requests and help neighbours connect.</p>
@@ -53,7 +74,7 @@ export function renderCommunityDashboard() {
           </section>
 
           <!-- All Requests -->
-          <section class="community-requests">
+          <section class="community-requests" id="community-all-requests">
             <div class="community-section-heading">
               <div>
                 <h2>All Requests</h2>
@@ -63,6 +84,32 @@ export function renderCommunityDashboard() {
                 </p>
               </div>
             </div>
+
+<div class="community-request-toolbar">
+  <div class="community-filter-group">
+    <label for="community-status-filter">
+      Filter by Status
+    </label>
+    <select id="community-status-filter">
+      <option value="all">All Statuses</option>
+      <option value="unclaimed">Unclaimed</option>
+      <option value="open">Open</option>
+      <option value="accepted">Accepted</option>
+      <option value="completed">Completed</option>
+      <option value="cancelled">Cancelled</option>
+    </select>
+  </div>
+
+  <div class="community-filter-group">
+    <label for="community-date-sort">
+      Sort by Date
+    </label>
+    <select id="community-date-sort">
+      <option value="newest">Newest First</option>
+      <option value="oldest">Oldest First</option>
+    </select>
+  </div>
+</div>
 
             <div id="community-request-list"
                  aria-live="polite">
@@ -116,8 +163,16 @@ export function renderCommunityDashboard() {
 
       </div>
     </div>
-  `;
+  <button
+  id="community-back-to-top"
+  class="community-back-to-top"
+  type="button"
+  aria-label="Back to top"
+  title="Back to top">
+  ↑
+</button>`;
 }
+
 
 export function renderCommunityRequestCard(request) {
   const {
@@ -131,7 +186,7 @@ export function renderCommunityRequestCard(request) {
     attentionReason = ''
   } = request;
 
-  const escapeHTML = (value) =>
+  const escapeHTML = value =>
     String(value ?? '').replace(/[&<>"']/g, char => ({
       '&': '&amp;',
       '<': '&lt;',
@@ -140,71 +195,92 @@ export function renderCommunityRequestCard(request) {
       "'": '&#39;'
     }[char]));
 
-  const safeStatus = String(status).toLowerCase();
-  const statusClass =
-    ['open', 'accepted', 'completed', 'unclaimed']
-      .includes(safeStatus) ? safeStatus : 'other';
+  const safeStatus = String(status).trim().toLowerCase();
 
-const reasonType =
-  attentionReason === 'Urgent Request'
-    ? 'urgent'
-    : attentionReason === 'Overdue Request'
-      ? 'overdue'
-      : 'waiting';
+  const statusClass = [
+    'open', 'accepted', 'completed',
+    'unclaimed', 'cancelled'
+  ].includes(safeStatus) ? safeStatus : 'other';
+
+  const reasonType =
+    attentionReason === 'Urgent Request'
+      ? 'urgent'
+      : attentionReason === 'Overdue Request'
+        ? 'overdue'
+        : 'waiting';
+
+  const formattedDate =
+    dateNeeded && typeof dateNeeded.toDate === 'function'
+      ? dateNeeded.toDate().toLocaleDateString('en-MY')
+      : dateNeeded || 'Date not specified';
 
   return `
     <article class="community-request-card">
+
       <div class="community-request-top">
         <h3>${escapeHTML(task)}</h3>
+
         <span class="community-status community-status-${statusClass}">
           ${escapeHTML(status)}
         </span>
       </div>
 
-      
-${attentionReason ? `
-  <span
-    class="community-attention-reason"
-    data-reason="${reasonType}">
-    ${escapeHTML(attentionReason)}
-  </span>
-` : ''}
+      ${attentionReason ? `
+        <span
+          class="community-attention-reason"
+          data-reason="${reasonType}">
+          ${escapeHTML(attentionReason)}
+        </span>
+      ` : ''}
 
+      <div class="community-request-info">
+        <span class="community-info-item">
+          <span aria-hidden="true">📍</span>
+          ${escapeHTML(fasa)}
+        </span>
 
-      <p class="community-request-meta">
-        ${escapeHTML(requesterName)} ·
-        ${escapeHTML(fasa)} ·
-        ${escapeHTML(
-          dateNeeded && typeof dateNeeded.toDate === 'function'
-            ? dateNeeded.toDate().toLocaleDateString('en-MY')
-            : dateNeeded || 'Date not specified'
-          )}${request.timeNeeded ? ` · ${escapeHTML(request.timeNeeded)}` : ''}
-      </p>
+        <span class="community-info-item">
+          <span aria-hidden="true">📅</span>
+          ${escapeHTML(formattedDate)}
+          ${request.timeNeeded
+            ? ` · ${escapeHTML(request.timeNeeded)}`
+            : ''}
+        </span>
+      </div>
 
-      
-      <p class="community-request-details">
-        ${escapeHTML(details)}
-      </p>
+      ${details ? `
+        <p class="community-request-details">
+          ${escapeHTML(details)}
+        </p>
+      ` : ''}
 
-      <div class="community-request-actions">
-        <button
-          type="button"
-          class="community-view-btn"
-          data-request-id="${escapeHTML(id)}">
-          View Details
-        </button>
+      <div class="community-request-footer">
+        <span class="community-request-requester">
+          <span aria-hidden="true">👤</span>
+          ${escapeHTML(requesterName)}
+        </span>
 
-        ${['open', 'unclaimed'].includes(safeStatus) ? `
+        <div class="community-request-actions">
           <button
             type="button"
-            class="community-help-btn"
-            data-help-request-id="${escapeHTML(id)}">
-            I Can Help
+            class="community-view-btn"
+            data-request-id="${escapeHTML(id)}">
+            View Details
           </button>
-        ` : ''}
+
+          ${['open', 'unclaimed'].includes(safeStatus) ? `
+            <button
+              type="button"
+              class="community-help-btn"
+              data-help-request-id="${escapeHTML(id)}">
+              I Can Help
+            </button>
+          ` : ''}
+        </div>
       </div>
 
     </article>
   `;
 }
+
 

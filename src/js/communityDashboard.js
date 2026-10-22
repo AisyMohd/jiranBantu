@@ -133,9 +133,81 @@ export function getAttentionReason(request, now = new Date()) {
   return 'Unclaimed Request';
 }
 
+
+export function sortCommunityRequests(
+  requests,
+  sortOrder = 'newest'
+) {
+  return [...requests].sort((a, b) => {
+    const statusA = String(a.status || '').toLowerCase();
+    const statusB = String(b.status || '').toLowerCase();
+
+    // Unclaimed must always appear first.
+    if (statusA === 'unclaimed' && statusB !== 'unclaimed') {
+      return -1;
+    }
+
+    if (statusB === 'unclaimed' && statusA !== 'unclaimed') {
+      return 1;
+    }
+
+    // Sort by request creation date.
+    const dateA = toDate(a.dateNeeded)?.getTime() ?? 0;
+    const dateB = toDate(b.dateNeeded)?.getTime() ?? 0;
+
+    return sortOrder === 'oldest'
+      ? dateA - dateB
+      : dateB - dateA;
+  });
+}
+
+
+export function filterCommunityRequests(
+  requests,
+  selectedStatus = 'all'
+) {
+  if (selectedStatus === 'all') {
+    return requests;
+  }
+
+  return requests.filter(
+    request =>
+      String(request.status || '').toLowerCase() === selectedStatus
+  );
+}
+
 // Connect the existing dashboard UI to Firestore.
 export async function loadCommunityDashboard() {
-  const requestList = document.querySelector('#community-request-list');
+  
+  const backToTopBtn = document.querySelector(
+    '#community-back-to-top'
+  );
+
+  if (backToTopBtn) {
+    const updateBackToTop = () => {
+      backToTopBtn.classList.toggle(
+        'is-visible',
+        window.scrollY > 300
+      );
+    };
+
+    window.addEventListener(
+      'scroll',
+      updateBackToTop,
+      { passive: true }
+    );
+
+    updateBackToTop();
+
+    backToTopBtn.addEventListener('click', () => {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    });
+  }
+
+    const requestList = document.querySelector('#community-request-list');
   const attentionList = document.querySelector('#community-attention-list');
   const acceptedList = document.querySelector('#community-accepted-list');
 
@@ -275,14 +347,50 @@ export async function loadCommunityDashboard() {
     });
 
     // Render every request using your friend's existing card design.
-    requestList.innerHTML = preparedRequests.length
-      ? preparedRequests.map(request =>
-          renderCommunityRequestCard({
-            ...request,
-            attentionReason: getAttentionReason(request)
-          })
-        ).join('')
-      : '<p>No requests have been submitted yet.</p>';
+    
+const statusFilter = document.querySelector(
+  '#community-status-filter'
+);
+
+const dateSort = document.querySelector(
+  '#community-date-sort'
+);
+
+function renderFilteredRequests() {
+  const selectedStatus = statusFilter?.value || 'all';
+  const selectedSort = dateSort?.value || 'newest';
+
+  const filteredRequests = filterCommunityRequests(
+    preparedRequests,
+    selectedStatus
+  );
+
+  const sortedRequests = sortCommunityRequests(
+    filteredRequests,
+    selectedSort
+  );
+
+  requestList.innerHTML = sortedRequests.length
+    ? sortedRequests.map(request =>
+        renderCommunityRequestCard({
+          ...request,
+          attentionReason: getAttentionReason(request)
+        })
+      ).join('')
+    : '<p>No requests found for this status.</p>';
+}
+
+statusFilter?.addEventListener(
+  'change',
+  renderFilteredRequests
+);
+
+dateSort?.addEventListener(
+  'change',
+  renderFilteredRequests
+);
+
+renderFilteredRequests();
 
     // Render only requests that need attention.
     attentionList.innerHTML = attentionRequests.length
