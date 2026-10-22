@@ -1,54 +1,54 @@
+
 export function residentDashboard() {
   return `
+    <div class="jb-layout">
 
-      <div class="jb-layout">
+      <!-- Left Sidebar -->
+      <aside class="jb-sidebar">
+        <p class="jb-sidebar-role" id="dashboard-role"></p>
+        <p class="jb-eyebrow">RESIDENT · FASA 6</p>
 
-        <!-- Left Sidebar -->
-        <aside class="jb-sidebar">
-          <p class="jb-sidebar-role" id="dashboard-role">
-            RESIDENT · FASA 6
+        <nav class="jb-sidebar-nav" id="dashboard-sidebar-nav">
+          <button class="jb-side-link active" data-page="overview">
+            ⌂ Home
+          </button>
+
+          <button class="jb-side-link" data-page="browse">
+            ♡ Help Neighbours
+          </button>
+
+          <button class="jb-side-link" data-page="my-requests">
+            ☷ My Requests
+          </button>
+
+          <button class="jb-side-link" data-page="accepted-requests">
+            ☆ My Accepted Requests
+          </button>
+
+          <button class="jb-side-link" data-page="profile">
+            ♙ My Profile
+          </button>
+        </nav>
+
+        <div class="jb-sidebar-tip">
+          <strong>Try the demo</strong>
+          <p>
+            Request help, find it in My Requests, then explore
+            any available requests and accept one.
           </p>
-          <p class="jb-eyebrow">RESIDENT · FASA 6</p>
-          <nav class="jb-sidebar-nav" id="dashboard-sidebar-nav">
-            <button class="jb-side-link active" data-page="overview">
-              ⌂ Home
-            </button>
+        </div>
+      </aside>
 
-            <button class="jb-side-link" data-page="my-requests">
-              ☷ My Requests
-            </button>
+      <!-- Main Dashboard -->
+      <main class="jb-content">
 
-            <button class="jb-side-link" data-page="browse">
-              ♡ Help Neighbours
-            </button>
-            <button class="jb-side-link" data-page="profile">
-              ♙ My Profile
-            </button>
-            <button class="jb-side-link" data-page="accepted-requests">
-              ♡ My Accepted Requests
-            </button>
+        <div class="jb-welcome">
+          <h1 id="dashboard-title"></h1>
+          <p id="dashboard-description">
+            Your neighbourhood: Fasa 6
+          </p>
+        </div>
 
-          </nav>
-
-          <div class="jb-sidebar-tip">
-            <strong>Try the demo</strong>
-            <p>
-              Request help, find it in My Requests, then explore
-              available requests and accept one.
-            </p>
-          </div>
-        </aside>
-
-        <!-- Main Dashboard -->
-        <main class="jb-content">
-
-           <div class="jb-welcome">
-            <h1 id="dashboard-title"></h1>
-            <p id="dashboard-description">
-              Your neighbourhood: Fasa 6
-            </p>
-          </div>
-          
         <!-- I Need Help button -->
         <div class="jb-home-actions">
           <button
@@ -57,7 +57,7 @@ export function residentDashboard() {
             id="need-help-btn"
           >
             <span class="jb-need-help-icon"></span>
-            + I Need Help 
+            + I Need Help
           </button>
         </div>
 
@@ -76,17 +76,17 @@ export function residentDashboard() {
           <div id="request-list" class="jb-request-list"></div>
         </section>
 
-          <!-- Existing button retained for dashboard.js -->
-          <button
-            type="button"
-            class="jb-primary-btn"
-            id="need-help-btn"
-            hidden
-          >
-            + I Need Help
-          </button>
+        <!-- Existing button retained for dashboard.js -->
+        <button
+          type="button"
+          class="jb-primary-btn"
+          id="need-help-btn"
+          hidden
+        >
+          + I Need Help
+        </button>
 
-        </main>
-      </div>
+      </main>
+    </div>
   `;
 }

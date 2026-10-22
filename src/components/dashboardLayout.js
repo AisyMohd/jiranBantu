@@ -1,15 +1,13 @@
+
 export function dashboardLayout() {
   return `
     <section id="dashboard" class="jb-dashboard" hidden>
 
       <!-- Shared header for Resident and Community -->
-      <header class="jb-header">
-        <a class="jb-brand" href="#" id="dashboard-brand">
-          <span class="jb-logo">♡</span>
-          <span class="jb-brand-text">
-            <strong>JiranBantu</strong>
-            <small>Jiran Bantu Jiran</small>
-          </span>
+      <header class="navbar dashboard-navbar">
+        <a class="brand" href="#" id="dashboard-brand" aria-label="JiranBantu home">
+          <span class="brand-icon">✳</span>
+          <span>Jiran<span class="brand-accent">Bantu</span></span>
         </a>
 
         <div class="jb-header-actions">
@@ -28,7 +26,14 @@ export function dashboardLayout() {
             </svg>
             <span id="dashboard-user-name"></span>
           </button>
-          <span id="dashboard-user-community" class="jb-user-community" data-community-only hidden></span>
+
+          <span
+            id="dashboard-user-community"
+            class="jb-user-community"
+            data-community-only
+            hidden
+          ></span>
+
           <button type="button" class="jb-header-btn" id="logout-btn">
             Logout
           </button>
@@ -37,12 +42,14 @@ export function dashboardLayout() {
 
       <!-- Dashboard content rendered according to the user's role -->
       <div id="dashboard-content">
-          <div id="resident-dashboard-mount" hidden></div>
-          <div id="community-dashboard-mount" hidden></div>
-          <div id="request-form-container" class="request-modal-backdrop"hidden></div>
+        <div id="resident-dashboard-mount" hidden></div>
+        <div id="community-dashboard-mount" hidden></div>
+        <div
+          id="request-form-container"
+          class="request-modal-backdrop"
+          hidden
+        ></div>
       </div>
-
-      
 
       <!-- Shared bottom navigation -->
       <nav class="jb-bottom-nav" aria-label="Dashboard navigation">
@@ -57,6 +64,13 @@ export function dashboardLayout() {
 
         <button type="button"
           class="jb-bottom-link"
+          data-page="browse"
+          data-resident-only>
+          ♡ Help Neighbours
+        </button>
+
+        <button type="button"
+          class="jb-bottom-link"
           data-page="my-requests"
           data-resident-only>
           ☷ My Requests
@@ -64,9 +78,9 @@ export function dashboardLayout() {
 
         <button type="button"
           class="jb-bottom-link"
-          data-page="browse"
+          data-page="accepted-requests"
           data-resident-only>
-          ♡ Help Neighbours
+          ☆ My Accepted Requests
         </button>
 
         <button type="button"
@@ -102,13 +116,6 @@ export function dashboardLayout() {
         </button>
 
       </nav>
-
     </section>
-
-    <!-- Keep the existing working request form container -->
-    <div id="request-form-container"
-      class="request-modal-backdrop"
-      hidden>
-    </div>
   `;
 }

@@ -483,6 +483,7 @@ dashboard.addEventListener('click', async event => {
 }
 
 export function showDashboard(role, profile = {}) {
+  console.log('showDashboard called:', role, profile);
   currentRole = role === 'community' ? 'community' : 'resident';
   currentProfile = { ...profile };
 
@@ -546,6 +547,12 @@ export function showDashboard(role, profile = {}) {
     roleLabel.textContent = 'RESIDENT';
   }
 
+  const dashboardTitle = document.querySelector('#dashboard-title');
+
+if (dashboardTitle) {
+  dashboardTitle.textContent = `Hello, ${currentProfile.fullName || 'Resident'}`;
+  console.log('Welcome title:', dashboardTitle.textContent);
+}
   // Initialize the real request form after its button and shared
   // request-form container exist in the page.
   if (!requestFormInitialized) {
