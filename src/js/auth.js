@@ -31,7 +31,11 @@ let phoneInput;
 let fullNameInput;
 let genderInput;
 let areaInput;
+let otherAreaInput;
+let otherAreaField;
+let idNumberInput;
 let dateOfBirthInput;
+let ageInput;
 let communityNameInput;
 let emailInput;
 let passwordInput;
@@ -63,6 +67,13 @@ function isResident() {
   return accountType.value === 'resident';
 }
 
+function updateOtherAreaField() {
+  const isOtherArea = areaInput.value === 'other';
+  otherAreaField.hidden = !isOtherArea;
+  otherAreaInput.disabled = !isResident() || authMode !== 'register' || !isOtherArea;
+  otherAreaInput.required = isResident() && authMode === 'register' && isOtherArea;
+}
+
 function updateAccountFields() {
   const resident = isResident();
 
@@ -81,12 +92,15 @@ function updateAccountFields() {
   fullNameInput.required = resident && authMode === 'register';
   genderInput.required = resident && authMode === 'register';
   areaInput.required = resident && authMode === 'register';
-  dateOfBirthInput.required = resident && authMode === 'register';
+  idNumberInput.required = resident && authMode === 'register';
 
   fullNameInput.disabled = !resident || authMode !== 'register';
   genderInput.disabled = !resident || authMode !== 'register';
   areaInput.disabled = !resident || authMode !== 'register';
+  idNumberInput.disabled = !resident || authMode !== 'register';
   dateOfBirthInput.disabled = !resident || authMode !== 'register';
+  ageInput.disabled = !resident || authMode !== 'register';
+  updateOtherAreaField();
 
   communityNameInput.required =
     !resident && authMode === 'register';
@@ -146,7 +160,7 @@ function openAuth(mode) {
   document.querySelector('#modal-switch').firstChild.textContent =
     mode === 'register'
       ? 'Already have an account? '
-      : 'New to Community Aid? ';
+      : 'New to JiranBantu? ';
 
   updateAccountFields();
 
@@ -156,8 +170,11 @@ function openAuth(mode) {
   fullNameInput.value = '';
   genderInput.value = '';
   areaInput.value = '';
+  otherAreaInput.value = '';
+  idNumberInput.value = '';
   communityNameInput.value = '';
   dateOfBirthInput.value = '';
+  ageInput.value = '';
 
   phoneInput.focus();
 }
@@ -234,8 +251,56 @@ function getAgeCategory(dateOfBirth) {
 
   return {
     valid: true,
+    age,
     ageCategory: age >= 60 ? 'elderly' : 'general'
   };
+}
+
+function parseMalaysianIdNumber(value) {
+  const digits = value.trim().replace(/[\s-]/g, '');
+
+  if (!/^\d{12}$/.test(digits)) {
+    return {
+      valid: false,
+      message: 'Enter a valid 12-digit Malaysian MyKad number. Dashes are optional.'
+    };
+  }
+
+  const currentYear = new Date().getFullYear();
+  const yearSuffix = Number(digits.slice(0, 2));
+  const year = yearSuffix <= currentYear % 100
+    ? 2000 + yearSuffix
+    : 1900 + yearSuffix;
+  const dateOfBirth = [
+    String(year).padStart(4, '0'),
+    digits.slice(2, 4),
+    digits.slice(4, 6)
+  ].join('-');
+  const ageResult = getAgeCategory(dateOfBirth);
+
+  if (!ageResult.valid) {
+    return {
+      valid: false,
+      message: 'The birth date in this ID number is invalid.'
+    };
+  }
+
+  return {
+    valid: true,
+    idNumber: digits,
+    dateOfBirth,
+    age: ageResult.age,
+    ageCategory: ageResult.ageCategory
+  };
+}
+
+function updateIdentityFields() {
+  const identity = parseMalaysianIdNumber(idNumberInput.value);
+
+  dateOfBirthInput.value = identity.valid ? identity.dateOfBirth : '';
+  ageInput.value = identity.valid
+    ? `${identity.age} ${identity.age === 1 ? 'year' : 'years'}`
+    : '';
 }
 
 async function sendOtp(event) {
@@ -261,16 +326,17 @@ async function sendOtp(event) {
     if (
       !fullNameInput.value.trim() ||
       !genderInput.value ||
-      !areaInput.value.trim()
+      !areaInput.value ||
+      (areaInput.value === 'other' && !otherAreaInput.value.trim())
     ) {
       showNotice('Please complete your name, gender and residential area.');
       return;
     }
 
-    const ageResult = getAgeCategory(dateOfBirthInput.value);
+    const identity = parseMalaysianIdNumber(idNumberInput.value);
 
-    if (!ageResult.valid) {
-      showNotice(ageResult.message);
+    if (!identity.valid) {
+      showNotice(identity.message);
       return;
     }
   }
@@ -377,11 +443,11 @@ try {
     }
 
     
-    const ageResult = getAgeCategory(dateOfBirthInput.value);
+    const identity = parseMalaysianIdNumber(idNumberInput.value);
 
-    if (!ageResult.valid) {
+    if (!identity.valid) {
       await signOut(auth);
-      showNotice(ageResult.message);
+      showNotice(identity.message);
       return;
     }
 
@@ -390,8 +456,12 @@ try {
       phone: user.phoneNumber || phoneInput.value.trim(),
       fullName: fullNameInput.value.trim(),
       gender: genderInput.value,
-      area: areaInput.value.trim(),
-      ageCategory: ageResult.ageCategory,
+      area: areaInput.value === 'other'
+        ? otherAreaInput.value.trim()
+        : areaInput.value,
+      idNumber: identity.idNumber,
+      dateOfBirth: identity.dateOfBirth,
+      ageCategory: identity.ageCategory,
       role: 'resident',
       createdAt: serverTimestamp()
     };
@@ -582,16 +652,11 @@ export function initAuth() {
   fullNameInput = document.querySelector('#full-name');
   genderInput = document.querySelector('#gender');
   areaInput = document.querySelector('#area');
+  otherAreaField = document.querySelector('#other-area-field');
+  otherAreaInput = document.querySelector('#other-area');
+  idNumberInput = document.querySelector('#id-number');
   dateOfBirthInput = document.querySelector('#date-of-birth');
-
-  // Prevent selecting a future date using the date picker.
-  const today = new Date();
-
-  dateOfBirthInput.max = [
-    today.getFullYear(),
-    String(today.getMonth() + 1).padStart(2, '0'),
-    String(today.getDate()).padStart(2, '0')
-  ].join('-');
+  ageInput = document.querySelector('#age-display');
 
   communityNameInput = document.querySelector('#community-name');
   emailInput = document.querySelector('#email');
@@ -630,6 +695,13 @@ export function initAuth() {
         ? 'Use your phone number and SMS verification.'
         : 'Use your Community Management email and password.';
   });
+
+  areaInput.addEventListener('change', () => {
+    updateOtherAreaField();
+    if (areaInput.value === 'other') otherAreaInput.focus();
+  });
+
+  idNumberInput.addEventListener('input', updateIdentityFields);
 
   modal.addEventListener('click', event => {
     if (event.target === modal) closeAuth();
