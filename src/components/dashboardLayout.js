@@ -13,7 +13,22 @@ export function dashboardLayout() {
         </a>
 
         <div class="jb-header-actions">
-          <span id="dashboard-user" class="jb-user-name"></span>
+          <button
+            type="button"
+            id="dashboard-user"
+            class="jb-user-name"
+            data-page="profile"
+            data-resident-only
+            aria-label="Open your profile"
+            title="Open your profile"
+          >
+            <svg class="jb-user-avatar" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="8" r="3.5"></circle>
+              <path d="M4.5 20a7.5 7.5 0 0 1 15 0"></path>
+            </svg>
+            <span id="dashboard-user-name"></span>
+          </button>
+          <span id="dashboard-user-community" class="jb-user-community" data-community-only hidden></span>
           <button type="button" class="jb-header-btn" id="logout-btn">
             Logout
           </button>
@@ -52,6 +67,13 @@ export function dashboardLayout() {
           data-page="browse"
           data-resident-only>
           ♡ Help Neighbours
+        </button>
+
+        <button type="button"
+          class="jb-bottom-link"
+          data-page="profile"
+          data-resident-only>
+          ♙ My Profile
         </button>
 
         <!-- Community navigation -->

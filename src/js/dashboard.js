@@ -29,6 +29,7 @@ let landingFooter;
 let currentRole = 'resident';
 let currentPageId = 'overview';
 let requestFormInitialized = false;
+let currentProfile = {};
 
 const residentPages = {
   overview: {
@@ -44,9 +45,13 @@ const residentPages = {
     description: 'Track the help you have requested.'
   },
   'accepted-requests': {
-  title: 'My Accepted Requests',
-  description: 'View requests you have accepted and contact the neighbours you are helping.'
-}
+    title: 'My Accepted Requests',
+    description: 'View requests you have accepted and contact the neighbours you are helping.'
+  },
+  profile: {
+    title: 'My Profile',
+    description: 'Your account and neighbourhood details.'
+  }
 };
 
 export function initDashboard() {
@@ -479,6 +484,7 @@ dashboard.addEventListener('click', async event => {
 
 export function showDashboard(role, profile = {}) {
   currentRole = role === 'community' ? 'community' : 'resident';
+  currentProfile = { ...profile };
 
   const isCommunity = currentRole === 'community';
 
@@ -501,10 +507,10 @@ export function showDashboard(role, profile = {}) {
   document.body.classList.remove('modal-open');
 
   const userLabel = document.querySelector('#dashboard-user');
-  if (userLabel) {
-    userLabel.textContent =
-      profile.fullName || (isCommunity ? 'Community Team' : 'Resident');
-  }
+  const userName = profile.fullName || (isCommunity ? 'Community Team' : 'Resident');
+  if (userLabel) userLabel.querySelector('#dashboard-user-name').textContent = userName;
+  const communityUserLabel = document.querySelector('#dashboard-user-community');
+  if (communityUserLabel) communityUserLabel.textContent = userName;
 
   // Show the correct shared bottom navigation.
   document.querySelectorAll('[data-resident-only]').forEach(element => {
@@ -578,8 +584,95 @@ function openResidentPage(pageId) {
     return;
   }
 
+  if (pageId === 'profile') {
+    renderResidentProfile(list);
+    return;
+  }
+
   list.replaceChildren();
   void loadResidentRequests(list, pageId);
+}
+
+function renderResidentProfile(container) {
+  const formatValue = value => value || 'Not provided';
+  const dateOfBirth = currentProfile.dateOfBirth || '';
+  let formattedDate = 'Not provided';
+  let age = 'Not provided';
+
+  if (dateOfBirth) {
+    const [year, month, day] = dateOfBirth.split('-').map(Number);
+    const birthDate = new Date(year, month - 1, day);
+
+    if (
+      !Number.isNaN(birthDate.getTime()) &&
+      birthDate.getFullYear() === year &&
+      birthDate.getMonth() === month - 1 &&
+      birthDate.getDate() === day
+    ) {
+      formattedDate = birthDate.toLocaleDateString('en-MY', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      });
+
+      const today = new Date();
+      let years = today.getFullYear() - year;
+      if (
+        today.getMonth() < month - 1 ||
+        (today.getMonth() === month - 1 && today.getDate() < day)
+      ) {
+        years--;
+      }
+      age = `${years} ${years === 1 ? 'year' : 'years'}`;
+    }
+  }
+
+  const idDigits = String(currentProfile.idNumber || '').replace(/\D/g, '');
+  const maskedId = idDigits.length >= 4
+    ? `••••••••${idDigits.slice(-4)}`
+    : 'Not provided';
+  const fields = [
+    ['Full name', formatValue(currentProfile.fullName)],
+    ['Phone number', formatValue(currentProfile.phone)],
+    ['Gender', formatValue(currentProfile.gender)],
+    ['Neighbourhood / Fasa', formatValue(currentProfile.area)],
+    ['Date of birth', formattedDate],
+    ['Age', age],
+    ['MyKad / ID number', maskedId]
+  ];
+
+  const card = document.createElement('section');
+  card.className = 'jb-profile-card';
+
+  const heading = document.createElement('div');
+  heading.className = 'jb-profile-heading';
+  const avatar = document.createElement('span');
+  avatar.className = 'jb-profile-avatar';
+  avatar.setAttribute('aria-hidden', 'true');
+  avatar.textContent = (currentProfile.fullName || 'R').trim().charAt(0).toUpperCase();
+  const title = document.createElement('h3');
+  title.textContent = currentProfile.fullName || 'Resident';
+  heading.append(avatar, title);
+
+  const details = document.createElement('dl');
+  details.className = 'jb-profile-details';
+
+  fields.forEach(([label, value]) => {
+    const row = document.createElement('div');
+    row.className = 'jb-profile-detail';
+    const term = document.createElement('dt');
+    term.textContent = label;
+    const description = document.createElement('dd');
+    description.textContent = value;
+    row.append(term, description);
+    details.append(row);
+  });
+
+  const privacyNote = document.createElement('p');
+  privacyNote.className = 'jb-profile-privacy';
+  privacyNote.textContent = 'Your ID number is shown in masked form for your privacy.';
+  card.append(heading, details, privacyNote);
+  container.replaceChildren(card);
 }
 
 async function loadResidentRequests(container, pageId) {
@@ -1011,4 +1104,3 @@ function showAppModal({
 
   return { close: closeModal };
 }
-

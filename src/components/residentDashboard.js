@@ -21,6 +21,9 @@ export function residentDashboard() {
             <button class="jb-side-link" data-page="browse">
               ♡ Help Neighbours
             </button>
+            <button class="jb-side-link" data-page="profile">
+              ♙ My Profile
+            </button>
             <button class="jb-side-link" data-page="accepted-requests">
               ♡ My Accepted Requests
             </button>
